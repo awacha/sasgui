@@ -1,6 +1,6 @@
 import gtk
 import matplotlib
-from ... import misc
+from sastool import misc
 
 from PyGTKCallback import PyGTKCallback
 @PyGTKCallback

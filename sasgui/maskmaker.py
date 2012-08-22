@@ -9,11 +9,6 @@ from sastool.io.twodim import readmask
 import gtk
 import re
 import matplotlib
-matplotlib.use('GtkAgg')
-import matplotlib.backends
-if matplotlib.backends.backend.upper() != 'GTKAGG':
-    raise ImportError('Sastool.gui works only with the GTK backend of \
-Matplotlib')
 
 import uuid
 import numpy as np
@@ -149,7 +144,7 @@ class MaskMaker(gtk.Dialog):
     _mouseclick_mode = None  # Allowed: 'Points', 'Lines', 'PixelHunt' and None
     _mouseclick_last = ()
     _selection = None
-
+    _maskimage = None
     def __init__(self, title='Make mask...', parent=None,
                  flags=gtk.DIALOG_DESTROY_WITH_PARENT | \
                  gtk.DIALOG_NO_SEPARATOR,
@@ -246,15 +241,20 @@ class MaskMaker(gtk.Dialog):
         return self.maskid
     def get_mask(self):
         return self._mask.copy()
-    def update_graph(self, redraw=False):
+    def update_graph(self, redraw=False, justthemask=False):
+        if justthemask and self._maskimage is not None:
+            self._maskimage.set_data(self._mask)
+            self.canvas.draw()
+            return True
         if redraw:
             self.fig.clf()
         im = self.fig.gca().imshow(self._matrix, interpolation='nearest')
         if self._mask.sum() != self._mask.size:
-            self.fig.gca().imshow(self._mask, cmap=_colormap_for_mask, interpolation='nearest')
+            self._maskimage = self.fig.gca().imshow(self._mask, cmap=_colormap_for_mask, interpolation='nearest')
         if redraw:
             self.fig.colorbar(im)
         self.canvas.draw()
+        return True
     def newmask(self, widget=None): #IGNORE:W0613
         self._mask = np.ones_like(self._matrix).astype(np.bool8)
         self.update_graph(True)
@@ -350,7 +350,7 @@ class MaskMaker(gtk.Dialog):
                 if (event.xdata >= 0 and event.xdata < self._mask.shape[1] and
                     event.ydata >= 0 and event.ydata < self._mask.shape[0]):
                     self._mask[round(event.ydata), round(event.xdata)] ^= 1
-                    self.update_graph()
+                    self.update_graph(justthemask=True)
             self._mouseclick_last.append((event.xdata, event.ydata))
     def pixelhunt(self, widget):    #IGNORE:W0613
         with GraphToolbarVisibility(self.graphtoolbar, self.toolbar):

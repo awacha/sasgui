@@ -26,7 +26,7 @@ class PathEditor(gtk.Dialog):
                              gtk.STOCK_OK, gtk.RESPONSE_OK))
         self.set_default_response(gtk.RESPONSE_CANCEL)
         hbox = gtk.HBox()
-        self.vbox.pack_start(hbox)
+        self.get_content_area().pack_start(hbox)
 
         sw = gtk.ScrolledWindow()
         hbox.pack_start(sw)
@@ -94,6 +94,7 @@ class PathEditor(gtk.Dialog):
         while it is not None:
             mypath.append(self.pathstore.get_value(it, 0))
             it = self.pathstore.iter_next(it)
+        mypath = [p[0] for p in self.pathstore]
         self.pathlist.set(mypath)
     def callback_move(self, button, whatmove):
         it = self.tw.get_selection().get_selected()[1]
@@ -166,6 +167,7 @@ class PathEditor(gtk.Dialog):
             mypath.append(self.pathstore.get_value(it, 0))
             it = self.pathstore.iter_next(it)
         misc.sastoolrc.set('misc.searchpath', mypath)
+
 def pathedit(mainwindow=None, searchpath=None):
     pe = PathEditor(mainwindow, searchpath)
     if pe.run() == gtk.RESPONSE_OK:
