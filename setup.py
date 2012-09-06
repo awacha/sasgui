@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 
-setup(name='sasgui', version='0.0.1', author='Andras Wacha',
+setup(name='sasgui', version='0.0.2', author='Andras Wacha',
       author_email='awacha@gmail.com', url='http://github.com/awacha/sasgui',
       description='Graphical User Interface utilities for small-angle scattering',
       packages=find_packages(),
