@@ -10,6 +10,8 @@ import os
 
 from sastool import misc
 
+__all__ = ['PathEditor', 'pathedit']
+
 class PathEditor(gtk.Dialog):
     def __init__(self, parent=None, pathlist=None):
         if parent is not None:

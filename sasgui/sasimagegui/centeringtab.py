@@ -1,7 +1,7 @@
 import gtk
 import pkg_resources
 
-xhair = gtk.IconSet(gtk.gdk.pixbuf_new_from_file(pkg_resources.resource_filename('sastool', 'resource/icons/crosshair.png')))
+xhair = gtk.IconSet(gtk.gdk.pixbuf_new_from_file(pkg_resources.resource_filename('sasgui', 'resource/icons/crosshair.png')))
 gtk.stock_add([('sastool_crosshair', 'Set from graph', 0, 0, 'EN_US')])
 ifa = gtk.IconFactory()
 ifa.add('sastool_crosshair', xhair)

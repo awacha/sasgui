@@ -182,9 +182,9 @@ class SASImageGuiMain(gtk.Window):
                               (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
             dialog.set_default_response(gtk.RESPONSE_CANCEL)
             l = gtk.Label('Centering, please wait...'); l.set_alignment(0, 0.5)
-            dialog.vbox.pack_start(l)
+            dialog.get_content_area().pack_start(l)
             pb = gtk.ProgressBar()
-            dialog.vbox.pack_start(pb)
+            dialog.get_content_area().pack_start(pb)
             def closedialogfunction(*args, **kwargs): #IGNORE:W0613
                 dialog.hide_all()
             dialog.get_widget_for_response(gtk.RESPONSE_CANCEL).connect('clicked', closedialogfunction)

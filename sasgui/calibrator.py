@@ -11,6 +11,8 @@ from sastool.fitting import FixedParameter, nonlinear_leastsquares
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg, NavigationToolbar2GTKAgg
 
+__all__ = ['EnergyCalibrator', 'DistCalibrator', 'QCalibrator', 'run_energycalibrator', 'run_qcalibrator']
+
 class Calibrator(gtk.Dialog):
     '''
     A specialized gtk.Dialog for configuring interpolation-like calibration.
