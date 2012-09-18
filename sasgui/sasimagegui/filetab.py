@@ -2,7 +2,7 @@ import gtk
 import os
 import gobject
 
-from PyGTKCallback import PyGTKCallback
+from ..PyGTKCallback import PyGTKCallback
 from sastool import misc
 from .. import patheditor
 from sastool import classes

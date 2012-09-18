@@ -2,7 +2,7 @@ import gtk
 import matplotlib
 from sastool import misc
 
-from PyGTKCallback import PyGTKCallback
+from ..PyGTKCallback import PyGTKCallback
 @PyGTKCallback
 class PlotTab(gtk.HBox):
     lastplotraw = None

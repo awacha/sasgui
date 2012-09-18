@@ -1,7 +1,7 @@
 import gtk
 import numpy as np
 
-from PyGTKCallback import PyGTKCallback
+from ..PyGTKCallback import PyGTKCallback
 @PyGTKCallback
 class IntegrateTab(gtk.HBox):
     def __init__(self):

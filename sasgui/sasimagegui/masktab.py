@@ -1,6 +1,6 @@
 import gtk
 
-from PyGTKCallback import PyGTKCallback
+from ..PyGTKCallback import PyGTKCallback
 @PyGTKCallback
 class MaskTab(gtk.HBox):
     def __init__(self):

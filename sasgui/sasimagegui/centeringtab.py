@@ -7,7 +7,7 @@ ifa = gtk.IconFactory()
 ifa.add('sastool_crosshair', xhair)
 ifa.add_default()
 
-from PyGTKCallback import PyGTKCallback
+from ..PyGTKCallback import PyGTKCallback
 @PyGTKCallback
 class CenteringTab(gtk.HBox):
     def __init__(self):
