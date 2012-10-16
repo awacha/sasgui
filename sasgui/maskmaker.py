@@ -117,14 +117,15 @@ class MaskMaker(gtk.Dialog):
             raise ValueError("Argument 'matrix' is required!")
         if not isinstance(matrix, SASExposure):
             matrix = SASExposure(matrix)
-            if mask is None:
-                matrix.set_mask(np.ones_like(matrix).astype(np.bool8))
-        elif mask is not None:
+        if mask is not None:
             matrix.set_mask(mask)
+        elif matrix.mask is None:
+            matrix.set_mask()
         if maskid is not None:
             self.maskid = maskid
         gtk.Dialog.__init__(self, title, parent, flags, buttons)
         self._exposure = matrix
+
 
         self.set_default_response(gtk.RESPONSE_CANCEL)
 
@@ -187,7 +188,7 @@ class MaskMaker(gtk.Dialog):
         self.toolbar.insert(self.undobutton, -1)
         self.undobutton.connect('clicked', self.on_button_clicked, 'Undo')
         self.undobutton.set_sensitive(False)
-
+        
         self.get_content_area().show_all()
         self.update_graph()
     def backup_mask(self):
