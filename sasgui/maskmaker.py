@@ -5,7 +5,6 @@ Created on Feb 14, 2012
 '''
 
 from .plot2dsasimage import PlotSASImage
-from sastool.io.twodim import readmask
 
 import gtk
 import re
@@ -301,7 +300,7 @@ class MaskMaker(gtk.Dialog):
                     self._mouseclick_mode = None
                     self.backup_mask()
                     self.mask.edit_circle(self._mouseclicks[0][1], self._mouseclicks[0][0],
-                                          np.sqrt((self._mouseclicks[1][0] - self._mouseclicks[0][0]) ** 2 +
+                                          np.sqrt((self._mouseclicks[1][0] - self._mouseclicks[0][0]) ** 2 + 
                                                   (self._mouseclicks[1][1] - self._mouseclicks[0][1]) ** 2),
                                           whattodo=self.get_maskingmode())
                     self.update_graph(justthemask=True)
