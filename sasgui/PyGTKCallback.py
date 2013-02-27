@@ -65,7 +65,9 @@ class PyGTKCallback(object):
                 if 'unknown signal name' in te.message:
                     for p in obj._pygtkcallbacks:
                         if p['name'] == name and p['block'] == 0:
-                            p['callback'](p['slotobject'], *(args + p['args']))
+                            ret = p['callback'](p['slotobject'], *(args + p['args']))
+                            if ret:
+                                break
                 else:
                     raise
         def disconnect(handler_id):

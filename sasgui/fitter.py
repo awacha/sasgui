@@ -14,6 +14,8 @@ import sastool
 import traceback
 
 __all__ = ['Fitter', 'FitParam', 'FitParamList']
+
+@PyGTKCallback
 class Fitter(gtk.Notebook):
     def __init__(self, axes=None, loadfuncs=sastool.fitting.fitfunctions):
         gtk.Notebook.__init__(self)
@@ -190,7 +192,7 @@ class Fitter(gtk.Notebook):
                 else:
                     dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK,
                                                str(ex.message))
-                    #dialog.format_secondary_text('Traceback:')
+                    # dialog.format_secondary_text('Traceback:')
                     msgarea = dialog.get_message_area()
                     expander = gtk.Expander('Traceback')
                     expander.set_expanded(False)
@@ -203,7 +205,7 @@ class Fitter(gtk.Notebook):
                     tv.get_buffer().set_text(traceback.format_exc())
                     tv.set_editable(False)
                     tv.set_wrap_mode(gtk.WRAP_WORD)
-                    #tv.get_default_attributes().font = pango.FontDescription('serif,monospace')
+                    # tv.get_default_attributes().font = pango.FontDescription('serif,monospace')
                     tv.set_justification(gtk.JUSTIFY_LEFT)
                     msgarea.show_all()
                     dialog.set_title('Error!')
@@ -253,6 +255,14 @@ class Fitter(gtk.Notebook):
             color = tuple([getattr(self.output_color.get_color(), '%s_float' % a) for a in ['red', 'green', 'blue']])
             self.axes.plot(x, ret[-1]['func_value'], marker=marker, lw=linewidth, color=color, ls=linestyle, label='__fitted_curve__')
             self.axes.figure.canvas.draw()
+            stat = ret[-1]
+            stat['func'] = func
+            stat['starttime'] = starttime
+            stat['endtime'] = endtime
+            stat['dataset_name'] = self.lineselector.active_line.get_label()
+            stat['x_min'] = x.min()
+            stat['x_max'] = x.max()
+            self.emit('fitting-done', ret)
         elif whattodo == 'plotfitted':
             self.outputparams_table.set_sensitive(b.get_active())
         elif whattodo == 'clearfitted':
@@ -595,7 +605,7 @@ class FitParamList(gtk.ScrolledWindow):
             self._committed = False
         except:
             raise 
-            #TODO: notify user
+            # TODO: notify user
     def on_fixed_changed(self, cellrenderer, path):
         self._committed = False
         it = self.model.get_iter(path)

@@ -9,15 +9,18 @@ from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg, NavigationToo
 import matplotlib
 import numpy as np
 import itertools
+import gc
+import time
 
 from sastool.classes import SASExposure, SASMask
 
 default_palette = 'jet'
 
-__all__ = ['PlotSASImage']
+__all__ = ['PlotSASImage', 'PlotSASImageWindow']
 
 class PlotSASImage(gtk.VBox):
     _exposure = None
+    __gsignals__ = {'delete-event':'override'}
     def __init__(self, exposure=None):
         gtk.VBox.__init__(self)
         self.properties_frame = gtk.Expander()
@@ -81,12 +84,19 @@ class PlotSASImage(gtk.VBox):
 
         self.fig = Figure(figsize=(3.75, 2.5), dpi=80)
         self.canvas = FigureCanvasGTKAgg(self.fig)
-        self.canvas.set_size_request(300, 200)
+        self.canvas.set_size_request(640, 480)
         self.pack_start(self.canvas)
         self.connect('parent-set', self.on_parent_set)
         self.exposure = exposure
         self.show_all()
         self.hide()
+        self.connect('destroy', self.on_delete)
+    def on_delete(self, *args, **kwargs):
+        del self._exposure
+        self.fig.clf()
+        del self.fig
+        del self.canvas
+        gc.collect()
     def get_axes(self):
         if len(self.fig.axes) == 0:
             self.fig.add_subplot(1, 1, 1)
@@ -113,6 +123,8 @@ class PlotSASImage(gtk.VBox):
             button.set_label('Q / pixel')
         self.draw_image(button, 'axes')
     def set_exposure(self, exposure):
+        if self._exposure is not None:
+            del self._exposure
         self._exposure = exposure
         if isinstance(exposure, SASExposure):
             self.plotmask_checkbutton.set_active(exposure.check_for_mask(False))
@@ -227,3 +239,39 @@ class PlotSASImage(gtk.VBox):
 
         self.canvas.draw()
 
+class PlotSASImageWindow(gtk.Dialog):
+    __gsignals__ = {'delete-event':'override'}
+    _instance_list = []
+    def __init__(self, exposure=None, title='Image', parent=None, flags=gtk.DIALOG_DESTROY_WITH_PARENT, buttons=()):
+        gtk.Dialog.__init__(self, title, parent, flags, buttons)
+        self.set_default_response(gtk.RESPONSE_OK)
+        vb = self.get_content_area()
+        self.plot = PlotSASImage(None)
+        vb.pack_start(self.plot, True)
+        PlotSASImageWindow._instance_list.append(self)
+        self._lastfocustime = time.time()
+        self.connect('delete-event', self.on_delete)
+        self.connect('focus-in-event', self.on_focus)
+        self.set_exposure(exposure)
+    def on_delete(self, *args, **kwargs):
+        self.plot.destroy()
+        self.destroy()
+        PlotSASImageWindow._instance_list.remove(self)
+        return True
+    def on_focus(self, *args, **kwargs):
+        self._lastfocustime = time.time()
+    @classmethod
+    def get_current_plot(cls):
+        if not cls._instance_list:
+            return cls()
+        maxfocustime = max([x._lastfocustime for x in cls._instance_list])
+        return [x for x in cls._instance_list if x._lastfocustime == maxfocustime][0]
+    def set_exposure(self, exposure):
+        self.plot.set_exposure(exposure)
+        if exposure is not None:
+            self.set_title(unicode(exposure.header))
+    def get_axes(self):
+        return self.plot.get_axes()
+    def get_exposure(self):
+        return self.plot.get_exposure()
+    
