@@ -9,8 +9,8 @@ class PyGTKCallback(object):
         def connect(name, callbackfunc, *args):
             try:
                 retval = self._wrappedcls.connect(obj, name, callbackfunc, *args)
-            except TypeError as te:
-                if 'unknown signal name' in te.message:
+            except (TypeError, AttributeError) as te:
+                if ('unknown signal name' in te.message) or ('has no attribute' in te.message):
                     if hasattr(obj, '_valid_pygtk_signalnames'):
                         if name not in obj._valid_pygtk_signalnames:
                             raise TypeError(repr(obj) + ": unknown signal name: " + name)
@@ -22,8 +22,8 @@ class PyGTKCallback(object):
         def connect_after(name, callbackfunc, *args):
             try:
                 retval = self._wrappedcls.connect_after(obj, name, callbackfunc, *args)
-            except TypeError as te:
-                if 'unknown signal name' in te.message:
+            except (TypeError, AttributeError) as te:
+                if ('unknown signal name' in te.message) or ('has no attribute' in te.message):
                     if hasattr(obj, '_valid_pygtk_signalnames'):
                         if name not in obj._valid_pygtk_signalnames:
                             raise TypeError(repr(obj) + ": unknown signal name: " + name)
@@ -35,8 +35,8 @@ class PyGTKCallback(object):
         def connect_object(name, callbackfunc, slotobject, *args):
             try:
                 retval = self._wrappedcls.connect_object(obj, name, callbackfunc, slotobject, *args)
-            except TypeError as te:
-                if 'unknown signal name' in te.message:
+            except (TypeError, AttributeError) as te:
+                if ('unknown signal name' in te.message) or ('has no attribute' in te.message):
                     if hasattr(obj, '_valid_pygtk_signalnames'):
                         if name not in obj._valid_pygtk_signalnames:
                             raise TypeError(repr(obj) + ": unknown signal name: " + name)
@@ -48,8 +48,8 @@ class PyGTKCallback(object):
         def connect_object_after(name, callbackfunc, slotobject, *args):
             try:
                 retval = self._wrappedcls.connect_object_after(obj, name, callbackfunc, slotobject, *args)
-            except TypeError as te:
-                if 'unknown signal name' in te.message:
+            except (TypeError, AttributeError) as te:
+                if ('unknown signal name' in te.message) or ('has no attribute' in te.message):
                     if hasattr(obj, '_valid_pygtk_signalnames'):
                         if name not in obj._valid_pygtk_signalnames:
                             raise TypeError(repr(obj) + ": unknown signal name: " + name)
@@ -61,8 +61,8 @@ class PyGTKCallback(object):
         def emit(name, *args):
             try:
                 self._wrappedcls.emit(obj, name, *args)
-            except TypeError as te:
-                if 'unknown signal name' in te.message:
+            except (TypeError, AttributeError) as te:
+                if ('unknown signal name' in te.message) or ('has no attribute' in te.message):
                     for p in obj._pygtkcallbacks:
                         if p['name'] == name and p['block'] == 0:
                             ret = p['callback'](p['slotobject'], *(args + p['args']))

@@ -19,7 +19,7 @@ class PlotSASCurve(gtk.HBox):
         self.canvas = FigureCanvasGTKAgg(self.fig)
         self.canvas.set_size_request(640, 480)
         vbox_fig.pack_start(self.canvas)
-        tb = NavigationToolbar2GTKAgg(self.canvas, vbox_fig)
+        tb = NavigationToolbar2GTKAgg(self.canvas, None)
         vbox_fig.pack_start(tb, False)
         self.fitter = Fitter(axes=self.gca())
         ex.add(self.fitter)

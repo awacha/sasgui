@@ -21,8 +21,9 @@ __all__ = ['PlotSASImage', 'PlotSASImageWindow']
 class PlotSASImage(gtk.VBox):
     _exposure = None
     __gsignals__ = {'delete-event':'override'}
-    def __init__(self, exposure=None):
+    def __init__(self, exposure=None, after_draw_cb=None):
         gtk.VBox.__init__(self)
+        self.after_draw_cb = after_draw_cb
         self.properties_frame = gtk.Expander()
         self.properties_frame.set_label('Plot properties')
         self.pack_start(self.properties_frame, False)
@@ -236,7 +237,8 @@ class PlotSASImage(gtk.VBox):
         # put beam center cross-hair lines to top.
         for l in plot_axes.get_lines():
             l.set_zorder(max([0] + [x.get_zorder() + 1 for x in plot_axes.get_images()]))
-
+        if what == 'force' and callable(self.after_draw_cb):
+            self.after_draw_cb(self.exposure, self.fig, plot_axes)
         self.canvas.draw()
 
 class PlotSASImageWindow(gtk.Dialog):
