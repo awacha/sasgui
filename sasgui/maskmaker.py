@@ -6,17 +6,18 @@ Created on Feb 14, 2012
 
 from .plot2dsasimage import PlotSASImage
 
-import gtk
+from gi.repository import Gtk
 import re
 import matplotlib
 import pkg_resources
-import gobject
+from gi.repository import GObject
+from gi.repository import GdkPixbuf
 
 import uuid
 import numpy as np
 import matplotlib.nxutils
-from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg, \
-NavigationToolbar2GTKAgg
+from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg
+from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3
 from matplotlib.figure import Figure
 import os
 import scipy.io
@@ -26,7 +27,7 @@ from sastool import misc
 
 __all__ = ['MaskMaker', 'makemask']
 
-iconfactory = gtk.IconFactory()
+iconfactory = Gtk.IconFactory()
 for f, n in [('circle.png', 'Select a circle'),
           ('histogram_masked.png', 'Select from intensity histogram (only masked pixels'),
           ('histogram.png', 'Select from histogram'),
@@ -37,38 +38,38 @@ for f, n in [('circle.png', 'Select a circle'),
           ('rectangle.png', 'Select rectangle'),
           ('nonpositive.png', 'Select non-positive pixels')]:
     basename = os.path.splitext(f)[0]
-    iconset = gtk.IconSet(gtk.gdk.pixbuf_new_from_file(pkg_resources.resource_filename('sasgui', 'resource/icons/%s' % f)))
-    gtk.stock_add([('sasgui_%s' % basename, n, 0, 0, 'C')])
+    iconset = Gtk.IconSet(GdkPixbuf.Pixbuf.new_from_file(pkg_resources.resource_filename('sasgui', 'resource/icons/%s' % f)))
+    # Gtk.stock_add([('sasgui_%s' % basename, n, 0, 0, 'C')])
     iconfactory.add('sasgui_%s' % basename, iconset)
 iconfactory.add_default()
 
-class HistogramSelector(gtk.Dialog):
+class HistogramSelector(Gtk.Dialog):
     def __init__(self, data, *args, **kwargs):
-        gtk.Dialog.__init__(self, *args, **kwargs)
-        self.set_default_response(gtk.RESPONSE_CANCEL)
+        Gtk.Dialog.__init__(self, *args, **kwargs)
+        self.set_default_response(Gtk.ResponseType.CANCEL)
         self._data = data
         vbox = self.get_content_area()
-        hbox = gtk.HBox()
-        vbox.pack_start(hbox, False)
-        l = gtk.Label('Number of histogram bins:')
+        hbox = Gtk.HBox()
+        vbox.pack_start(hbox, False, True, 0)
+        l = Gtk.Label(label='Number of histogram bins:')
         l.set_alignment(0, 0.5)
-        hbox.pack_start(l, False)
-        self.nbins_spin = gtk.SpinButton()
-        hbox.pack_start(self.nbins_spin)
+        hbox.pack_start(l, False, True, 0)
+        self.nbins_spin = Gtk.SpinButton()
+        hbox.pack_start(self.nbins_spin, True, True, 0)
         self.nbins_spin.set_range(1, 1e100)
         self.nbins_spin.set_increments(1, 10)
         self.nbins_spin.set_digits(0)
         self.nbins_spin.set_numeric(True)
-        #self.nbins_spin.connect('changed', self.on_nbins_changed)
-        b = gtk.Button(stock=gtk.STOCK_APPLY)
-        hbox.pack_start(b, False)
+        # self.nbins_spin.connect('changed', self.on_nbins_changed)
+        b = Gtk.Button(stock=Gtk.STOCK_APPLY)
+        hbox.pack_start(b, False, True, 0)
         b.connect('clicked', self.on_nbins_changed)
         self.fig = Figure((640 / 72., 480 / 72.), 72)
-        self.canvas = FigureCanvasGTKAgg(self.fig)
+        self.canvas = FigureCanvasGTK3Agg(self.fig)
         self.canvas.set_size_request(300, 200)
-        vbox.pack_start(self.canvas)
-        self.figure_toolbar = NavigationToolbar2GTKAgg(self.canvas, self)
-        vbox.pack_start(self.figure_toolbar, False)
+        vbox.pack_start(self.canvas, True, True, 0)
+        self.figure_toolbar = NavigationToolbar2GTK3(self.canvas, self)
+        vbox.pack_start(self.figure_toolbar, False, True, 0)
         self.fig.add_subplot(1, 1, 1)
         self.show_all()
         self.hide()
@@ -90,7 +91,7 @@ class HistogramSelector(gtk.Dialog):
         self.fig.canvas.draw()
         return False
     def on_nbins_changed(self, widget):
-        gobject.idle_add(self.redraw)
+        GObject.idle_add(self.redraw)
         return True
     def get_xlimits(self):
         return self.fig.gca().axis()[0:2]
@@ -98,7 +99,7 @@ class HistogramSelector(gtk.Dialog):
         return self.fig.gca()
 
 
-class MaskMaker(gtk.Dialog):
+class MaskMaker(Gtk.Dialog):
     _mouseclick_mode = None  # Allowed: 'Points', 'Lines', 'PixelHunt' and None
     _mouseclicks = []
     _selection = None
@@ -107,10 +108,9 @@ class MaskMaker(gtk.Dialog):
     _mask_backup = []
     _graphtoolbarvisibility = None
     def __init__(self, title='Make mask...', parent=None,
-                 flags=gtk.DIALOG_DESTROY_WITH_PARENT | \
-                 gtk.DIALOG_NO_SEPARATOR,
-                 buttons=(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL,
-                          gtk.RESPONSE_CANCEL),
+                 flags=Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                 buttons=(Gtk.STOCK_OK, Gtk.ResponseType.OK, Gtk.STOCK_CANCEL,
+                          Gtk.ResponseType.CANCEL),
                  matrix=None, mask=None, maskid=None):
         if matrix is None:
             raise ValueError("Argument 'matrix' is required!")
@@ -122,53 +122,54 @@ class MaskMaker(gtk.Dialog):
             matrix.set_mask()
         if maskid is not None:
             self.maskid = maskid
-        gtk.Dialog.__init__(self, title, parent, flags, buttons)
+        Gtk.Dialog.__init__(self, title, parent, flags, buttons)
         self._exposure = matrix
 
 
-        self.set_default_response(gtk.RESPONSE_CANCEL)
+        self.set_default_response(Gtk.ResponseType.CANCEL)
 
-        clearbutton = gtk.Button(stock=gtk.STOCK_NEW)
-        self.get_action_area().pack_end(clearbutton)
+        clearbutton = Gtk.Button(stock=Gtk.STOCK_NEW)
+        self.get_action_area().pack_end(clearbutton, True, True, 0)
         clearbutton.connect('clicked', self.newmask)
         clearbutton.show()
-        savebutton = gtk.Button(stock=gtk.STOCK_SAVE_AS)
-        self.get_action_area().pack_end(savebutton)
+        savebutton = Gtk.Button(stock=Gtk.STOCK_SAVE_AS)
+        self.get_action_area().pack_end(savebutton, True, True, 0)
         savebutton.connect('clicked', self.savemask)
         savebutton.show()
-        loadbutton = gtk.Button(stock=gtk.STOCK_OPEN)
-        self.get_action_area().pack_end(loadbutton)
+        loadbutton = Gtk.Button(stock=Gtk.STOCK_OPEN)
+        self.get_action_area().pack_end(loadbutton, True, True, 0)
         loadbutton.connect('clicked', self.loadmask)
         loadbutton.show()
 
         vbox = self.get_content_area()
-        self.toolbar = gtk.Toolbar()
-        self.toolbar.set_style(gtk.TOOLBAR_ICONS)
-        vbox.pack_start(self.toolbar, False, True)
+        self.toolbar = Gtk.Toolbar()
+        self.toolbar.set_style(Gtk.ToolbarStyle.ICONS)
+        vbox.pack_start(self.toolbar, False, True, 0)
 
 
         self.fig = PlotSASImage()
         self.fig.exposure = self.exposure
-        vbox.pack_start(self.fig)
+        vbox.pack_start(self.fig, True, True, 0)
         self.graphtoolbar = self.fig.figure_toolbar
         self.fig.canvas.mpl_connect('button_press_event', self._on_matplotlib_mouseclick)
 
-        self.pixelhunt_button = gtk.ToggleToolButton('sasgui_pixelhunt')
+        # self.pixelhunt_button = Gtk.ToggleToolButton(icon_widget=Gtk.Image.new_from_icon_name('sasgui_pixelhunt', self.toolbar.get_icon_size()), label=iconlabels['sasgui_pixelhunt'])
+        self.pixelhunt_button = Gtk.ToggleToolButton(stock_id='sasgui_pixelhunt')
         self.toolbar.insert(self.pixelhunt_button, -1)
         self.pixelhunt_button.connect('toggled', self.on_button_clicked, 'Pixelhunt')
         self.pixelhunt_button.set_tooltip_text('Pixel hunting mode. Mask/unmask pixels one-by-one.')
 
-        self.maskingmode = gtk.combo_box_new_text()
+        self.maskingmode = Gtk.ComboBoxText()
         self.maskingmode.append_text('mask')
         self.maskingmode.append_text('unmask')
         self.maskingmode.append_text('invert')
         self.maskingmode.set_tooltip_text('Masking mode. This determines what happens to the mask if you select a region.')
         self.maskingmode.set_active(0)
-        ti = gtk.ToolItem()
+        ti = Gtk.ToolItem()
         ti.add(self.maskingmode)
         self.toolbar.insert(ti, -1)
 
-        self.polygon_button = gtk.ToggleToolButton('sasgui_polygon')
+        self.polygon_button = Gtk.ToggleToolButton(stock_id='sasgui_polygon')
         self.toolbar.insert(self.polygon_button, -1)
         self.polygon_button.connect('toggled', self.on_button_clicked, 'Select a polygon')
         self.polygon_button.set_tooltip_text('Select a polygon by its corners. Click this button once again to finish.')
@@ -179,11 +180,11 @@ class MaskMaker(gtk.Dialog):
                            ('Invert mask', 'sasgui_invert_mask'),
                            ('Select nonfinite pixels', 'sasgui_infandnan'),
                            ('Select nonpositive pixels', 'sasgui_nonpositive')]:
-            b = gtk.ToolButton(stock)
+            b = Gtk.ToolButton(stock_id=stock)
             self.toolbar.insert(b, -1)
             b.connect('clicked', self.on_button_clicked, name)
             b.set_tooltip_text(name)
-        self.undobutton = gtk.ToolButton(gtk.STOCK_UNDO)
+        self.undobutton = Gtk.ToolButton(Gtk.STOCK_UNDO)
         self.toolbar.insert(self.undobutton, -1)
         self.undobutton.connect('clicked', self.on_button_clicked, 'Undo')
         self.undobutton.set_sensitive(False)
@@ -212,7 +213,7 @@ class MaskMaker(gtk.Dialog):
         return self.maskingmode.get_active_text().lower()
     def graphtoolbar_set_sensitive(self, value):
         if (self._graphtoolbarvisibility is None) and value:
-            #trying to set the graph toolbar sensitive when it is
+            # trying to set the graph toolbar sensitive when it is
             return False
         if (self._graphtoolbarvisibility is not None) and not value:
             # trying to set the graph toolbar insensitive when it is
@@ -245,12 +246,12 @@ class MaskMaker(gtk.Dialog):
             self.restore_mask()
         elif whattodo.find('Pixel') >= 0:
             if self._mouseclick_mode == 'Pixelhunt':
-                #we are in pixel hunt mode, turn it off
+                # we are in pixel hunt mode, turn it off
                 self.graphtoolbar_set_sensitive(True)
                 self.toolbar.foreach(lambda x:x.set_sensitive(True))
                 self._mouseclick_mode = None
             else:
-                #we are not pixel hunting, turn it on
+                # we are not pixel hunting, turn it on
                 self._mouseclick_mode = 'Pixelhunt'
                 self._mouseclicks = []
                 self.graphtoolbar_set_sensitive(False)
@@ -260,7 +261,7 @@ class MaskMaker(gtk.Dialog):
             return True
         elif whattodo.find('polygon') >= 0:
             if self._mouseclick_mode == 'LINES':
-                #polygon-ing, stop it.
+                # polygon-ing, stop it.
                 self.toolbar.foreach(lambda x:x.set_sensitive(True))
                 self._mouseclick_mode = None
                 if len(self._mouseclicks) > 2:
@@ -285,7 +286,7 @@ class MaskMaker(gtk.Dialog):
                     self._mouseclicks = []
                     self._mouseclick_mode = 'POINTS'
                     while len(self._mouseclicks) < 2:
-                        gtk.main_iteration()
+                        Gtk.main_iteration()
                     self._mouseclick_mode = None
                     self.backup_mask()
                     self.mask.edit_rectangle(self._mouseclicks[0][1], self._mouseclicks[0][0],
@@ -296,7 +297,7 @@ class MaskMaker(gtk.Dialog):
                     self._mouseclicks = []
                     self._mouseclick_mode = 'POINTS'
                     while len(self._mouseclicks) < 2:
-                        gtk.main_iteration()
+                        Gtk.main_iteration()
                     self._mouseclick_mode = None
                     self.backup_mask()
                     self.mask.edit_circle(self._mouseclicks[0][1], self._mouseclicks[0][0],
@@ -365,34 +366,34 @@ class MaskMaker(gtk.Dialog):
         else:
             self.fig.draw_image(what='force')
         return True
-    def newmask(self, widget=None): #IGNORE:W0613
+    def newmask(self, widget=None):  # IGNORE:W0613
         self.mask = np.ones_like(self.matrix)
         self.update_graph(justthemask=True)
         self.zap_backups()
         return True
-    def savemask(self, widget=None): #IGNORE:W0613
-        fcd = gtk.FileChooserDialog('Select file to save mask...', self,
-                                  gtk.FILE_CHOOSER_ACTION_SAVE,
-                                  (gtk.STOCK_OK, gtk.RESPONSE_OK,
-                                   gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+    def savemask(self, widget=None):  # IGNORE:W0613
+        fcd = Gtk.FileChooserDialog('Select file to save mask...', self,
+                                  Gtk.FileChooserAction.SAVE,
+                                  (Gtk.STOCK_OK, Gtk.ResponseType.OK,
+                                   Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
         fcd.set_current_folder(os.getcwd())
         fcd.set_destroy_with_parent(True)
         fcd.set_modal(True)
         fcd.set_do_overwrite_confirmation(True)
-        ff = gtk.FileFilter(); ff.set_name('All files'); ff.add_pattern('*')
+        ff = Gtk.FileFilter(); ff.set_name('All files'); ff.add_pattern('*')
         fcd.add_filter(ff)
-        ff = gtk.FileFilter(); ff.set_name('Numpy mask matrices'); ff.add_pattern('*.npy'); ff.add_pattern('*.npz')
+        ff = Gtk.FileFilter(); ff.set_name('Numpy mask matrices'); ff.add_pattern('*.npy'); ff.add_pattern('*.npz')
         fcd.add_filter(ff)
-        ff = gtk.FileFilter(); ff.set_name('BerSANS mask matrices'); ff.add_pattern('*.sma')
+        ff = Gtk.FileFilter(); ff.set_name('BerSANS mask matrices'); ff.add_pattern('*.sma')
         fcd.add_filter(ff)
-        ff = gtk.FileFilter(); ff.set_name('Matlab(R) mask matrices'); ff.add_pattern('*.mat')
+        ff = Gtk.FileFilter(); ff.set_name('Matlab(R) mask matrices'); ff.add_pattern('*.mat')
         fcd.add_filter(ff)
-        ff = gtk.FileFilter(); ff.set_name('All mask files'); ff.add_pattern('*.sma');
+        ff = Gtk.FileFilter(); ff.set_name('All mask files'); ff.add_pattern('*.sma');
         ff.add_pattern('*.mat'); ff.add_pattern('*.npy'); ff.add_pattern('*.npz')
         fcd.add_filter(ff)
         fcd.set_filter(ff)
         fcd.set_current_name(self.maskid + ".mat")
-        if fcd.run() == gtk.RESPONSE_OK:
+        if fcd.run() == Gtk.ResponseType.OK:
             self.increment_maskid()
             filename = fcd.get_filename()
             # guess the mask file format
@@ -403,49 +404,49 @@ class MaskMaker(gtk.Dialog):
             if filename.lower().endswith('.mat'):
                 scipy.io.savemat(filename, fdict)
             elif filename.lower().endswith('.npz'):
-                np.savez_compressed(filename, **fdict) #IGNORE:W0142
+                np.savez_compressed(filename, **fdict)  # IGNORE:W0142
             elif filename.lower().endswith('.npy'):
                 np.save(filename, np.array(self.mask))
             elif filename.lower().endswith('.sma'):
                 self.mask.write_to_sma(filename)
             else:
-                np.savez_compressed(filename + '.npz', **fdict) #IGNORE:W0142
+                np.savez_compressed(filename + '.npz', **fdict)  # IGNORE:W0142
         os.chdir(fcd.get_current_folder())
         fcd.destroy()
-    def loadmask(self, widget=None): #IGNORE:W0613
-        fcd = gtk.FileChooserDialog('Select file to load mask...', self,
-                                  gtk.FILE_CHOOSER_ACTION_OPEN,
-                                  (gtk.STOCK_OK, gtk.RESPONSE_OK,
-                                   gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+    def loadmask(self, widget=None):  # IGNORE:W0613
+        fcd = Gtk.FileChooserDialog('Select file to load mask...', self,
+                                  Gtk.FileChooserAction.OPEN,
+                                  (Gtk.STOCK_OK, Gtk.ResponseType.OK,
+                                   Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
         fcd.set_current_folder(os.getcwd())
         fcd.set_destroy_with_parent(True)
         fcd.set_modal(True)
-        ff = gtk.FileFilter(); ff.set_name('All files'); ff.add_pattern('*')
+        ff = Gtk.FileFilter(); ff.set_name('All files'); ff.add_pattern('*')
         fcd.add_filter(ff)
-        ff = gtk.FileFilter(); ff.set_name('Numpy mask matrices'); ff.add_pattern('*.npy'); ff.add_pattern('*.npz')
+        ff = Gtk.FileFilter(); ff.set_name('Numpy mask matrices'); ff.add_pattern('*.npy'); ff.add_pattern('*.npz')
         fcd.add_filter(ff)
-        ff = gtk.FileFilter(); ff.set_name('BerSANS mask matrices'); ff.add_pattern('*.sma')
+        ff = Gtk.FileFilter(); ff.set_name('BerSANS mask matrices'); ff.add_pattern('*.sma')
         fcd.add_filter(ff)
-        ff = gtk.FileFilter(); ff.set_name('Matlab(R) mask matrices'); ff.add_pattern('*.mat')
+        ff = Gtk.FileFilter(); ff.set_name('Matlab(R) mask matrices'); ff.add_pattern('*.mat')
         fcd.add_filter(ff)
-        ff = gtk.FileFilter(); ff.set_name('All mask files'); ff.add_pattern('*.sma')
+        ff = Gtk.FileFilter(); ff.set_name('All mask files'); ff.add_pattern('*.sma')
         ff.add_pattern('*.mat'); ff.add_pattern('*.npy'); ff.add_pattern('*.npz')
         fcd.add_filter(ff)
         fcd.set_filter(ff)
-        if fcd.run() == gtk.RESPONSE_OK:
+        if fcd.run() == Gtk.ResponseType.OK:
             fcd.hide()
             filename = fcd.get_filename()
             try:
                 mask1 = SASMask(filename)
-            except Exception:   #IGNORE:W0703
-                md = gtk.MessageDialog(self, gtk.DIALOG_DESTROY_WITH_PARENT | gtk.DIALOG_MODAL, gtk.MESSAGE_ERROR,
-                                     gtk.BUTTONS_OK, 'Invalid mask file.')
+            except Exception:  # IGNORE:W0703
+                md = Gtk.MessageDialog(self, Gtk.DialogFlags.DESTROY_WITH_PARENT | Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR,
+                                     Gtk.ButtonsType.OK, 'Invalid mask file.')
                 md.run()
                 md.destroy()
             else:
                 if mask1.shape != self.mask.shape:
-                    md = gtk.MessageDialog(self, gtk.DIALOG_DESTROY_WITH_PARENT | gtk.DIALOG_MODAL, gtk.MESSAGE_ERROR,
-                                         gtk.BUTTONS_OK, 'Incompatible shape for mask: %d x %d (instead of %d x %d)' % (mask1.shape + self.mask.shape))
+                    md = Gtk.MessageDialog(self, Gtk.DialogFlags.DESTROY_WITH_PARENT | Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR,
+                                         Gtk.ButtonsType.OK, 'Incompatible shape for mask: %d x %d (instead of %d x %d)' % (mask1.shape + self.mask.shape))
                     md.run()
                     md.destroy()
                 else:
@@ -481,16 +482,16 @@ class MaskMaker(gtk.Dialog):
                     self.mask.mask[round(event.ydata), round(event.xdata)] ^= 1
                     self.update_graph(justthemask=True)
             self._mouseclicks.append((event.xdata, event.ydata))
-    def selecthisto(self, data=None):  #IGNORE:W0613
+    def selecthisto(self, data=None):  # IGNORE:W0613
         if data is None:
             data = self.matrix
         hs = HistogramSelector(data, 'Zoom to desired range...',
                                parent=self.get_toplevel(),
-                               flags=gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-                               buttons=(gtk.STOCK_OK, gtk.RESPONSE_OK,
-                                        gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+                               flags=Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                               buttons=(Gtk.STOCK_OK, Gtk.ResponseType.OK,
+                                        Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
         hs.nbins = 100
-        if hs.run() == gtk.RESPONSE_OK:
+        if hs.run() == Gtk.ResponseType.OK:
             xlim = hs.get_xlimits()
             self.backup_mask()
             self.mask.edit_function(self.matrix, lambda a:((a <= max(xlim)) & (a >= min(xlim))), whattodo=self.get_maskingmode())
@@ -498,8 +499,8 @@ class MaskMaker(gtk.Dialog):
         hs.destroy()
         return True
     def run(self, *args, **kwargs):
-        retval = gtk.Dialog.run(self, *args, **kwargs)
-        if retval == gtk.RESPONSE_OK:
+        retval = Gtk.Dialog.run(self, *args, **kwargs)
+        if retval == Gtk.ResponseType.OK:
             self.increment_maskid()
         return retval
 
@@ -526,7 +527,7 @@ def makemask(matrix, mask0=None):
     """
     mm = MaskMaker(matrix=matrix, mask=mask0)
     resp = mm.run()
-    if resp == gtk.RESPONSE_OK:
+    if resp == Gtk.ResponseType.OK:
         mask0 = mm.get_mask()
     mm.destroy()
     return mask0

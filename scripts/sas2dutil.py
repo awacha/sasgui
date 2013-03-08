@@ -1,6 +1,10 @@
+print "SAS2DUTIL STARTING"
+import warnings
+warnings.filterwarnings('error')
 from sasgui.sasimagegui import SASImageGUIMain
-import gtk
-
-mw=SASImageGUIMain()
+from gi.repository import Gtk
+print "IMPORTED"
+mw = SASImageGUIMain()
+print "INSTANTIATING DONE"
 mw.show_all()
-gtk.main()
+Gtk.main()

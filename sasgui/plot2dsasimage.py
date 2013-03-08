@@ -3,9 +3,11 @@ Created on Sep 10, 2012
 
 @author: andris
 '''
-import gtk
+from gi.repository import Gtk
+from gi.repository import GObject
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg, NavigationToolbar2GTKAgg
+from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg
+from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3
 import matplotlib
 import numpy as np
 import itertools
@@ -18,75 +20,74 @@ default_palette = 'jet'
 
 __all__ = ['PlotSASImage', 'PlotSASImageWindow']
 
-class PlotSASImage(gtk.VBox):
+class PlotSASImage(Gtk.VBox):
     _exposure = None
     __gsignals__ = {'delete-event':'override'}
     def __init__(self, exposure=None, after_draw_cb=None):
-        gtk.VBox.__init__(self)
+        Gtk.VBox.__init__(self)
         self.after_draw_cb = after_draw_cb
-        self.properties_frame = gtk.Expander()
-        self.properties_frame.set_label('Plot properties')
-        self.pack_start(self.properties_frame, False)
-        tab = gtk.Table()
+        self.properties_frame = Gtk.Expander(label='Plot properties')
+        self.pack_start(self.properties_frame, False, True, 0)
+        tab = Gtk.Table()
         self.properties_frame.add(tab)
-        l = gtk.Label('Palette:')
+        l = Gtk.Label(label='Palette:')
         l.set_alignment(0, 0.5)
-        tab.attach(l, 0, 1, 0, 1, gtk.FILL, gtk.FILL)
-        self.palette_combo = gtk.combo_box_new_text()
+        tab.attach(l, 0, 1, 0, 1, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+        self.palette_combo = Gtk.ComboBoxText()
         tab.attach(self.palette_combo, 1, 2, 0, 1)
         self.palette_combo.connect('changed', self.draw_image, 'force')
         [self.palette_combo.append_text(m) for m in dir(matplotlib.cm) if eval('isinstance(matplotlib.cm.%s,matplotlib.colors.Colormap)' % m) and not m.endswith('_r')]
         self.palette_combo.set_active([i for i, l in itertools.izip(itertools.count(0), self.palette_combo.get_model()) if l[0] == default_palette][0])
 
-        l = gtk.Label('Color scale:')
+        l = Gtk.Label(label='Color scale:')
         l.set_alignment(0, 0.5)
-        tab.attach(l, 0, 1, 1, 2, gtk.FILL, gtk.FILL)
-        self.zscale_combo = gtk.combo_box_new_text()
+        tab.attach(l, 0, 1, 1, 2, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+        self.zscale_combo = Gtk.ComboBoxText()
         tab.attach(self.zscale_combo, 1, 2, 1, 2)
         for n in ['linear', 'log', 'sqrt']:
             self.zscale_combo.append_text(n)
         self.zscale_combo.set_active(0)
         self.zscale_combo.connect('changed', self.draw_image, 'force')
 
-        self.lowclip_checkbutton = gtk.CheckButton('Lower clip:')
-        tab.attach(self.lowclip_checkbutton, 2, 3, 0, 1, gtk.FILL, gtk.FILL)
-        self.lowclip_entry = gtk.Entry()
+        self.lowclip_checkbutton = Gtk.CheckButton('Lower clip:')
+        tab.attach(self.lowclip_checkbutton, 2, 3, 0, 1, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+        self.lowclip_entry = Gtk.Entry()
         tab.attach(self.lowclip_entry, 3, 4, 0, 1)
         self.lowclip_checkbutton.connect('toggled', self.on_clipcheckbutton_toggled, self.lowclip_entry)
 
-        self.highclip_checkbutton = gtk.CheckButton('Upper clip:')
-        tab.attach(self.highclip_checkbutton, 2, 3, 1, 2, gtk.FILL, gtk.FILL)
-        self.highclip_entry = gtk.Entry()
+        self.highclip_checkbutton = Gtk.CheckButton('Upper clip:')
+        tab.attach(self.highclip_checkbutton, 2, 3, 1, 2, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+        self.highclip_entry = Gtk.Entry()
         tab.attach(self.highclip_entry, 3, 4, 1, 2)
         self.highclip_checkbutton.connect('toggled', self.on_clipcheckbutton_toggled, self.highclip_entry)
 
 
-        hb = gtk.HBox()
+        hb = Gtk.HBox()
         tab.attach(hb, 0, 4, 2, 3)
-        self.palette_reversed_checkbutton = gtk.CheckButton('Reversed palette')
-        hb.pack_start(self.palette_reversed_checkbutton)
+        self.palette_reversed_checkbutton = Gtk.CheckButton('Reversed palette')
+        hb.pack_start(self.palette_reversed_checkbutton, True, True, 0)
         self.palette_reversed_checkbutton.connect('toggled', self.draw_image, 'force')
 
-        self.qorpixel_toggle = gtk.ToggleButton('Q / pixel')
-        hb.pack_start(self.qorpixel_toggle)
+        self.qorpixel_toggle = Gtk.ToggleButton('Q / pixel')
+        hb.pack_start(self.qorpixel_toggle, True, True, 0)
         self.qorpixel_toggle.connect('toggled', self.on_qorpixel_toggled)
 
-        self.plotmask_checkbutton = gtk.CheckButton('Plot mask')
-        hb.pack_start(self.plotmask_checkbutton)
+        self.plotmask_checkbutton = Gtk.CheckButton('Plot mask')
+        hb.pack_start(self.plotmask_checkbutton, True, True, 0)
         self.plotmask_checkbutton.connect('toggled', self.draw_image, 'plotmask')
 
-        self.beampos_checkbutton = gtk.CheckButton('Beam position')
-        hb.pack_start(self.beampos_checkbutton)
+        self.beampos_checkbutton = Gtk.CheckButton('Beam position')
+        hb.pack_start(self.beampos_checkbutton, True, True, 0)
         self.beampos_checkbutton.connect('toggled', self.draw_image, 'beampos')
 
-        self.colorbar_checkbutton = gtk.CheckButton('Color bar')
-        hb.pack_start(self.colorbar_checkbutton)
+        self.colorbar_checkbutton = Gtk.CheckButton('Color bar')
+        hb.pack_start(self.colorbar_checkbutton, True, True, 0)
         self.colorbar_checkbutton.connect('toggled', self.draw_image, 'colorbar')
 
         self.fig = Figure(figsize=(3.75, 2.5), dpi=80)
-        self.canvas = FigureCanvasGTKAgg(self.fig)
+        self.canvas = FigureCanvasGTK3Agg(self.fig)
         self.canvas.set_size_request(640, 480)
-        self.pack_start(self.canvas)
+        self.pack_start(self.canvas, True, True, 0)
         self.connect('parent-set', self.on_parent_set)
         self.exposure = exposure
         self.show_all()
@@ -106,12 +107,12 @@ class PlotSASImage(gtk.VBox):
     def gca(self, *args, **kwargs):
         return self.fig.gca(*args, **kwargs)
     def on_parent_set(self, widget, oldparent):
-        self.figure_toolbar = NavigationToolbar2GTKAgg(self.canvas, self.get_toplevel())
-        self.pack_start(self.figure_toolbar, False)
-        tbutton = gtk.ToolButton(gtk.STOCK_CLEAR)
+        self.figure_toolbar = NavigationToolbar2GTK3(self.canvas, self.get_toplevel())
+        self.pack_start(self.figure_toolbar, False, True, 0)
+        tbutton = Gtk.ToolButton(Gtk.STOCK_CLEAR)
         tbutton.connect('clicked', self.draw_image, 'clear')
         self.figure_toolbar.insert(tbutton, 0)
-        tbutton = gtk.ToolButton(gtk.STOCK_REFRESH)
+        tbutton = Gtk.ToolButton(Gtk.STOCK_REFRESH)
         tbutton.connect('clicked', self.draw_image, 'uberforce')
         self.figure_toolbar.insert(tbutton, 0)
     def on_clipcheckbutton_toggled(self, cb, entry):
@@ -241,15 +242,15 @@ class PlotSASImage(gtk.VBox):
             self.after_draw_cb(self.exposure, self.fig, plot_axes)
         self.canvas.draw()
 
-class PlotSASImageWindow(gtk.Dialog):
+class PlotSASImageWindow(Gtk.Dialog):
     __gsignals__ = {'delete-event':'override'}
     _instance_list = []
-    def __init__(self, exposure=None, title='Image', parent=None, flags=gtk.DIALOG_DESTROY_WITH_PARENT, buttons=()):
-        gtk.Dialog.__init__(self, title, parent, flags, buttons)
-        self.set_default_response(gtk.RESPONSE_OK)
+    def __init__(self, exposure=None, title='Image', parent=None, flags=Gtk.DialogFlags.DESTROY_WITH_PARENT, buttons=()):
+        Gtk.Dialog.__init__(self, title, parent, flags, buttons)
+        self.set_default_response(Gtk.ResponseType.OK)
         vb = self.get_content_area()
         self.plot = PlotSASImage(None)
-        vb.pack_start(self.plot, True)
+        vb.pack_start(self.plot, True, True, 0)
         PlotSASImageWindow._instance_list.append(self)
         self._lastfocustime = time.time()
         self.connect('delete-event', self.on_delete)

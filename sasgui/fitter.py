@@ -1,5 +1,7 @@
-import gtk
-import gobject
+from gi.repository import Gtk
+from gi.repository import GObject
+from gi.repository import Gdk
+from gi.repository import GdkPixbuf
 from sastool.classes import ErrorValue
 from sastool.misc.easylsq import FixedParameter, nonlinear_leastsquares
 import itertools
@@ -8,104 +10,105 @@ import types
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from PyGTKCallback import PyGTKCallback
 import time
 import sastool
 import traceback
 
 __all__ = ['Fitter', 'FitParam', 'FitParamList']
 
-@PyGTKCallback
-class Fitter(gtk.Notebook):
+class Fitter(Gtk.Notebook):
+    __gsignals__ = {'fitting-done':(GObject.SignalFlags.RUN_FIRST, None, (object,)),
+                  }
+    
     def __init__(self, axes=None, loadfuncs=sastool.fitting.fitfunctions):
-        gtk.Notebook.__init__(self)
+        Gtk.Notebook.__init__(self)
         if axes is None:
             axes = plt.gca()
         self.axes = axes
-        inputpage = gtk.VBox()
-        self.append_page(inputpage, gtk.Label('Input data'))
+        inputpage = Gtk.VBox()
+        self.append_page(inputpage, Gtk.Label(label='Input data'))
         self.lineselector = LineSelector()
         self.lineselector.connect('line-selected', self.on_linechanged)
         self.lineselector.update_lines(self.axes)
-        inputpage.pack_start(self.lineselector)
+        inputpage.pack_start(self.lineselector, True, True, 0)
         self.datarangeselector = DataRangeSelector()
         self.datarangeselector.set_axes(self.axes)
-        inputpage.pack_start(self.datarangeselector, False)
+        inputpage.pack_start(self.datarangeselector, False, True, 0)
         
-        modelpage = gtk.VBox()
-        self.append_page(modelpage, gtk.Label('Model'))
+        modelpage = Gtk.VBox()
+        self.append_page(modelpage, Gtk.Label(label='Model'))
         self.fitfunctionlist = FitFunctionList()
         self.fitfunctionlist.connect('func-changed', self.on_func_changed)
-        modelpage.pack_start(self.fitfunctionlist)
+        modelpage.pack_start(self.fitfunctionlist, True, True, 0)
         
-        fittingpage = gtk.VPaned()
-        self.append_page(fittingpage, gtk.Label('Control'))
+        fittingpage = Gtk.VPaned()
+        self.append_page(fittingpage, Gtk.Label(label='Control'))
         self.fitparamlist = FitParamList()
-        self.fitparamlist.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.fitparamlist.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         self.fitparamlist.connect('params-changed', self.on_params_changed)
         fittingpage.add1(self.fitparamlist)
-        vb = gtk.VBox()
+        vb = Gtk.VBox()
         fittingpage.add2(vb)
-        bb = gtk.HButtonBox()
-        vb.pack_start(bb, False)
-        self.backbutton = gtk.Button(stock=gtk.STOCK_GO_BACK)
+        bb = Gtk.HButtonBox()
+        vb.pack_start(bb, False, True, 0)
+        self.backbutton = Gtk.Button(stock=Gtk.STOCK_GO_BACK)
         bb.add(self.backbutton)
         self.backbutton.connect('clicked', self.on_button, 'Back')
         self.backbutton.set_sensitive(False)
-        self.forwardbutton = gtk.Button(stock=gtk.STOCK_GO_FORWARD)
+        self.forwardbutton = Gtk.Button(stock=Gtk.STOCK_GO_FORWARD)
         bb.add(self.forwardbutton)
         self.forwardbutton.connect('clicked', self.on_button, 'Forward')
         self.forwardbutton.set_sensitive(False)
-        self.execbutton = gtk.Button(stock=gtk.STOCK_EXECUTE)
+        self.execbutton = Gtk.Button(stock=Gtk.STOCK_EXECUTE)
         bb.add(self.execbutton)
         self.execbutton.connect('clicked', self.on_button, 'Fit')
         self.execbutton.set_sensitive(False)
-        self.plotbutton = gtk.Button('Plot model')
+        self.plotbutton = Gtk.Button('Plot model')
         bb.add(self.plotbutton)
         self.plotbutton.connect('clicked', self.on_button, 'plot')
         self.plotbutton.set_sensitive(False)
         
-        self.during_fitting = gtk.HBox()
-        vb.pack_start(self.during_fitting, False)
-        self.fitting_progress = gtk.ProgressBar()
-        self.during_fitting.pack_start(self.fitting_progress)
-        self.stopfitting_button = gtk.Button(stock=gtk.STOCK_STOP)
+        self.during_fitting = Gtk.HBox()
+        vb.pack_start(self.during_fitting, False, True, 0)
+        self.fitting_progress = Gtk.ProgressBar()
+        self.during_fitting.pack_start(self.fitting_progress, True, True, 0)
+        self.stopfitting_button = Gtk.Button(stock=Gtk.STOCK_STOP)
         self.stopfitting_button.connect('clicked', self._stopfitting)
-        self.during_fitting.pack_start(self.stopfitting_button, False)
+        self.during_fitting.pack_start(self.stopfitting_button, False, True, 0)
         self.during_fitting.set_no_show_all(True)
         
-        self.resultslog = gtk.TextView()
-        self.resultslog_sw = gtk.ScrolledWindow()
-        vb.pack_start(self.resultslog_sw)
+        self.resultslog = Gtk.TextView()
+        self.resultslog_sw = Gtk.ScrolledWindow()
+        vb.pack_start(self.resultslog_sw, True, True, 0)
         self.resultslog_sw.add(self.resultslog)
         self.resultslog.set_editable(False)
         
-        outputpage = gtk.VBox()
-        self.append_page(outputpage, gtk.Label('Output'))
-        self.plot_fitted_checkbox = gtk.CheckButton('Plot fitted curve?')
+        outputpage = Gtk.VBox()
+        self.append_page(outputpage, Gtk.Label(label='Output'))
+        self.plot_fitted_checkbox = Gtk.CheckButton('Plot fitted curve?')
         self.plot_fitted_checkbox.set_active(True)
         self.plot_fitted_checkbox.connect('toggled', self.on_button, 'plotfitted')
-        self.outputparams_table = gtk.Table()
-        outputpage.pack_start(self.outputparams_table, False)
-        l = gtk.Label('Marker:'); l.set_alignment(0, 0.5)
-        self.outputparams_table.attach(l, 0, 1, 0, 1, gtk.FILL, gtk.FILL)
-        self.output_marker = gtk.combo_box_new_text()
+        self.outputparams_table = Gtk.Table()
+        outputpage.pack_start(self.outputparams_table, False, True, 0)
+        l = Gtk.Label(label='Marker:'); l.set_alignment(0, 0.5)
+        self.outputparams_table.attach(l, 0, 1, 0, 1, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+        self.output_marker = Gtk.ComboBoxText()
         for m in ['None'] + list('.,ov^<>1234sp*hH+xDd|_'):
             self.output_marker.append_text(m)
         self.output_marker.set_active(0)
         self.outputparams_table.attach(self.output_marker, 1, 2, 0, 1)
         
-        l = gtk.Label('Line style:'); l.set_alignment(0, 0.5)
-        self.outputparams_table.attach(l, 0, 1, 1, 2, gtk.FILL, gtk.FILL)
-        self.output_linestyle = gtk.combo_box_new_text()
+        l = Gtk.Label(label='Line style:'); l.set_alignment(0, 0.5)
+        self.outputparams_table.attach(l, 0, 1, 1, 2, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+        self.output_linestyle = Gtk.ComboBoxText()
         for l in ['None', '-', '--', '-.', ':', ' ', "''"]:
             self.output_linestyle.append_text(l)
         self.output_linestyle.set_active(1)
         self.outputparams_table.attach(self.output_linestyle, 1, 2, 1, 2)
         
-        l = gtk.Label('Line width:'); l.set_alignment(0, 0.5)
-        self.outputparams_table.attach(l, 0, 1, 2, 3, gtk.FILL, gtk.FILL)
-        self.output_linewidth = gtk.SpinButton()
+        l = Gtk.Label(label='Line width:'); l.set_alignment(0, 0.5)
+        self.outputparams_table.attach(l, 0, 1, 2, 3, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+        self.output_linewidth = Gtk.SpinButton()
         self.output_linewidth.set_digits(1)
         self.output_linewidth.set_range(0, 100)
         self.output_linewidth.set_increments(0.1, 1)
@@ -113,9 +116,9 @@ class Fitter(gtk.Notebook):
         self.output_linewidth.set_numeric(True)
         self.outputparams_table.attach(self.output_linewidth, 1, 2, 2, 3)
         
-        l = gtk.Label('Marker size:'); l.set_alignment(0, 0.5)
-        self.outputparams_table.attach(l, 0, 1, 3, 4, gtk.FILL, gtk.FILL)
-        self.output_markersize = gtk.SpinButton()
+        l = Gtk.Label(label='Marker size:'); l.set_alignment(0, 0.5)
+        self.outputparams_table.attach(l, 0, 1, 3, 4, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+        self.output_markersize = Gtk.SpinButton()
         self.output_markersize.set_digits(1)
         self.output_markersize.set_range(0, 100)
         self.output_markersize.set_increments(0.1, 1)
@@ -123,17 +126,17 @@ class Fitter(gtk.Notebook):
         self.output_markersize.set_numeric(True)
         self.outputparams_table.attach(self.output_markersize, 1, 2, 3, 4)
 
-        l = gtk.Label('Color:'); l.set_alignment(0, 0.5)
-        self.outputparams_table.attach(l, 0, 1, 4, 5, gtk.FILL, gtk.FILL)
-        self.output_color = gtk.ColorButton(gtk.gdk.color_parse('red'))
+        l = Gtk.Label(label='Color:'); l.set_alignment(0, 0.5)
+        self.outputparams_table.attach(l, 0, 1, 4, 5, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+        self.output_color = Gtk.ColorButton(Gdk.color_parse('red'))
         self.outputparams_table.attach(self.output_color, 1, 2, 4, 5)
         
-        self.singleton_fittedcurve = gtk.CheckButton('Keep only one fitted curve?')
+        self.singleton_fittedcurve = Gtk.CheckButton('Keep only one fitted curve?')
         self.singleton_fittedcurve.set_active(True)
-        outputpage.pack_start(self.singleton_fittedcurve, False)
+        outputpage.pack_start(self.singleton_fittedcurve, False, True, 0)
         
-        hbb = gtk.HButtonBox()
-        b = gtk.Button('Remove plots of fitted curves')
+        hbb = Gtk.HButtonBox()
+        b = Gtk.Button('Remove plots of fitted curves')
         hbb.add(b)
         b.connect('clicked', self.on_button, 'clearfitted')
         self.axes.figure.canvas.mpl_connect('draw_event', self.on_drawevent)
@@ -178,42 +181,42 @@ class Fitter(gtk.Notebook):
                 self._stop_fitting_requested = False
                 def func1(*args, **kwargs):
                     self.fitting_progress.pulse()
-                    while gtk.events_pending():
-                        gtk.main_iteration(False)
+                    while Gtk.events_pending():
+                        Gtk.main_iteration_do(False)
                     if hasattr(self, '_stop_fitting_requested') and self._stop_fitting_requested:
                         raise StopIteration
                     return func(*args, **kwargs)
                 ret = nonlinear_leastsquares(x, y, dy, func1, params)
             except Exception as ex:
                 if isinstance(ex, StopIteration):
-                    dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_INFO, gtk.BUTTONS_OK,
+                    dialog = Gtk.MessageDialog(None, Gtk.DialogFlags.MODAL, Gtk.MessageType.INFO, Gtk.ButtonsType.OK,
                                                'User break')
                     dialog.set_title('User break')
                 else:
-                    dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK,
+                    dialog = Gtk.MessageDialog(None, Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR, Gtk.ButtonsType.OK,
                                                str(ex.message))
                     # dialog.format_secondary_text('Traceback:')
                     msgarea = dialog.get_message_area()
-                    expander = gtk.Expander('Traceback')
+                    expander = Gtk.Expander(label='Traceback')
                     expander.set_expanded(False)
-                    msgarea.pack_start(expander)
-                    sw = gtk.ScrolledWindow()
+                    msgarea.pack_start(expander, True, True, 0)
+                    sw = Gtk.ScrolledWindow()
                     sw.set_size_request(200, 300)
                     expander.add(sw)
-                    tv = gtk.TextView()
+                    tv = Gtk.TextView()
                     sw.add(tv)
                     tv.get_buffer().set_text(traceback.format_exc())
                     tv.set_editable(False)
-                    tv.set_wrap_mode(gtk.WRAP_WORD)
-                    # tv.get_default_attributes().font = pango.FontDescription('serif,monospace')
-                    tv.set_justification(gtk.JUSTIFY_LEFT)
+                    tv.set_wrap_mode(Gtk.WrapMode.WORD)
+                    # tv.get_default_attributes().font = Pango.FontDescription('serif,monospace')
+                    tv.set_justification(Gtk.Justification.LEFT)
                     msgarea.show_all()
                     dialog.set_title('Error!')
                 dialog.run()
                 dialog.destroy()
                 return False
             finally:
-                self.during_fitting.hide_all()
+                self.during_fitting.hide()
             endtime = time.time()
             buf = self.resultslog.get_buffer()
             buf.insert(buf.get_end_iter(), 'Results of fitting:\n')
@@ -245,7 +248,7 @@ class Fitter(gtk.Notebook):
             buf.insert(buf.get_end_iter(), str(ret[-1]['Covariance']) + '\n')
             buf.insert(buf.get_end_iter(), 'Correlation coefficients: \n')
             buf.insert(buf.get_end_iter(), str(ret[-1]['Correlation_coeffs']) + '\n')
-            gobject.idle_add(self._scrolldown)
+            GObject.idle_add(self._scrolldown)
             self.fitparamlist.update_params(ret[:-1])
             if self.singleton_fittedcurve.get_active():
                 self.on_button(None, 'clearfitted')
@@ -315,40 +318,40 @@ class Fitter(gtk.Notebook):
     def load_function(self, *args, **kwargs):
         return self.fitfunctionlist.load_functions(*args, **kwargs)
     
-class FitterDialog(gtk.Dialog):
+class FitterDialog(Gtk.Dialog):
     def __init__(self, title='Fitting...', parent=None,
-                 flags=gtk.DIALOG_DESTROY_WITH_PARENT,
-                 buttons=(gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE),
+                 flags=Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                 buttons=(Gtk.STOCK_CLOSE, Gtk.ResponseType.CLOSE),
                  axes=None, loadfuncs=sastool.fitting.fitfunctions):
-        gtk.Dialog.__init__(self, title, parent, flags, buttons)
+        Gtk.Dialog.__init__(self, title, parent, flags, buttons)
         self.fitter = Fitter(axes, loadfuncs)
-        self.get_content_area().pack_start(self.fitter)
+        self.get_content_area().pack_start(self.fitter, True, True, 0)
         self.fitter.show_all()
     def load_functions(self, *args, **kwargs):
         return self.fitter.load_functions(*args, **kwargs)
 
-class DataRangeSelector(gtk.VBox):
+class DataRangeSelector(Gtk.VBox):
     def __init__(self):
-        gtk.VBox.__init__(self)
+        Gtk.VBox.__init__(self)
         self.axes = None
         self.curve = None
-        tab = gtk.Table()
-        self.pack_start(tab, False)
-        self.min_checkbutton = gtk.CheckButton('Min:')
-        tab.attach(self.min_checkbutton, 0, 1, 0, 1, gtk.FILL, gtk.FILL)
-        self.minentry = gtk.Entry()
+        tab = Gtk.Table()
+        self.pack_start(tab, False, True, 0)
+        self.min_checkbutton = Gtk.CheckButton('Min:')
+        tab.attach(self.min_checkbutton, 0, 1, 0, 1, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+        self.minentry = Gtk.Entry()
         tab.attach(self.minentry, 1, 2, 0, 1)
-        self.mingetbutton = gtk.Button('From zoom')
-        tab.attach(self.mingetbutton, 2, 3, 0, 1, gtk.FILL, gtk.FILL)
+        self.mingetbutton = Gtk.Button('From zoom')
+        tab.attach(self.mingetbutton, 2, 3, 0, 1, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
         self.mingetbutton.connect('clicked', self.on_getbutton)
         self.min_checkbutton.connect('toggled', self.on_checkbutton, self.minentry, self.mingetbutton)
         
-        self.max_checkbutton = gtk.CheckButton('Max')
-        tab.attach(self.max_checkbutton, 0, 1, 1, 2, gtk.FILL, gtk.FILL)
-        self.maxentry = gtk.Entry()
+        self.max_checkbutton = Gtk.CheckButton('Max')
+        tab.attach(self.max_checkbutton, 0, 1, 1, 2, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+        self.maxentry = Gtk.Entry()
         tab.attach(self.maxentry, 1, 2, 1, 2)
-        self.maxgetbutton = gtk.Button('From zoom')
-        tab.attach(self.maxgetbutton, 2, 3, 1, 2, gtk.FILL, gtk.FILL)
+        self.maxgetbutton = Gtk.Button('From zoom')
+        tab.attach(self.maxgetbutton, 2, 3, 1, 2, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
         self.maxgetbutton.connect('clicked', self.on_getbutton)
         self.max_checkbutton.connect('toggled', self.on_checkbutton, self.maxentry, self.maxgetbutton)
         self.set_curve(None)
@@ -388,44 +391,44 @@ class DataRangeSelector(gtk.VBox):
         else:
             return np.inf
         
-@PyGTKCallback    
-class LineSelector(gtk.ScrolledWindow):
-    _valid_pygtk_signalnames = ['line-selected']
+class LineSelector(Gtk.ScrolledWindow):
+    __gsignals__ = {'line-selected':(GObject.SignalFlags.RUN_FIRST, None, (object,)),
+                  }
     def __init__(self):
-        gtk.ScrolledWindow.__init__(self)
-        self.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        Gtk.ScrolledWindow.__init__(self)
+        self.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         # list of lines: label, marker, linestyle, color pixbuf, line2d object, active?, xdata, ydata, xerror, yerror, xerror present, yerror present
-        self.liststore = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_STRING,
-                                       gobject.TYPE_STRING, gobject.TYPE_OBJECT,
-                                       gobject.TYPE_PYOBJECT, gobject.TYPE_BOOLEAN,
-                                       gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT,
-                                       gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT,
-                                       gobject.TYPE_BOOLEAN, gobject.TYPE_BOOLEAN)
-        self.treeview = gtk.TreeView(self.liststore)
+        self.liststore = Gtk.ListStore(GObject.TYPE_STRING, GObject.TYPE_STRING,
+                                       GObject.TYPE_STRING, GObject.TYPE_OBJECT,
+                                       GObject.TYPE_PYOBJECT, GObject.TYPE_BOOLEAN,
+                                       GObject.TYPE_PYOBJECT, GObject.TYPE_PYOBJECT,
+                                       GObject.TYPE_PYOBJECT, GObject.TYPE_PYOBJECT,
+                                       GObject.TYPE_BOOLEAN, GObject.TYPE_BOOLEAN)
+        self.treeview = Gtk.TreeView(self.liststore)
         self.treeview.set_rules_hint(True)
         self.treeview.set_headers_clickable(True)
         self.add(self.treeview)
-        crt = gtk.CellRendererToggle()
+        crt = Gtk.CellRendererToggle()
         crt.set_radio(True)
         crt.set_activatable(True)
         crt.connect('toggled', self.on_set_active_line)
-        tvc = gtk.TreeViewColumn('Active?', crt, active=5)
+        tvc = Gtk.TreeViewColumn('Active?', crt, active=5)
         self.treeview.append_column(tvc)
-        tvc = gtk.TreeViewColumn('Legend', gtk.CellRendererText(), text=0)
+        tvc = Gtk.TreeViewColumn('Legend', Gtk.CellRendererText(), text=0)
         self.treeview.append_column(tvc)
-        tvc = gtk.TreeViewColumn('Marker', gtk.CellRendererText(), text=1)
+        tvc = Gtk.TreeViewColumn('Marker', Gtk.CellRendererText(), text=1)
         self.treeview.append_column(tvc)
-        tvc = gtk.TreeViewColumn('Line style', gtk.CellRendererText(), text=2)
+        tvc = Gtk.TreeViewColumn('Line style', Gtk.CellRendererText(), text=2)
         self.treeview.append_column(tvc)
-        tvc = gtk.TreeViewColumn('Color', gtk.CellRendererPixbuf(), pixbuf=3)
+        tvc = Gtk.TreeViewColumn('Color', Gtk.CellRendererPixbuf(), pixbuf=3)
         self.treeview.append_column(tvc)
-        crt = gtk.CellRendererToggle()
+        crt = Gtk.CellRendererToggle()
         crt.set_activatable(False)
-        tvc = gtk.TreeViewColumn('X error', crt, active=10)
+        tvc = Gtk.TreeViewColumn('X error', crt, active=10)
         self.treeview.append_column(tvc)
-        crt = gtk.CellRendererToggle()
+        crt = Gtk.CellRendererToggle()
         crt.set_activatable(False)
-        tvc = gtk.TreeViewColumn('Y error', crt, active=11)
+        tvc = Gtk.TreeViewColumn('Y error', crt, active=11)
         self.treeview.append_column(tvc)
         self.active_line = None
     def on_set_active_line(self, cb, path):
@@ -465,10 +468,10 @@ class LineSelector(gtk.ScrolledWindow):
             else:
                 yerr = None
             errorbar_suspicious_lines = []
-            color = np.array(matplotlib.colors.colorConverter.to_rgb(l.get_color()), order='F')
-            arr = (np.ones((8, 24, 3), np.float, order='F') * 255 * color)
-            arr = arr.astype(np.uint8)
-            pb = gtk.gdk.pixbuf_new_from_array(arr, gtk.gdk.COLORSPACE_RGB, 8)
+            color = matplotlib.colors.colorConverter.to_rgb(l.get_color())
+            colorint = int(color[0] * 0xff000000) + int(color[1] * 0x00ff0000) + int(color[2] * 0x0000ff00) + 0xff
+            pb = GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB, False, 8, 24, 8)
+            pb.fill(colorint)
             self.liststore.append((l.get_label(), l.get_marker(), l.get_linestyle(), pb, l, l is self.active_line, l.get_xdata(), l.get_ydata(), xerr, yerr, xerr is not None, yerr is not None))
         if not any([l is self.active_line for l in axes.lines]):
             self.active_line = None
@@ -520,29 +523,28 @@ class FitFunction(object):
                 lis[len(lis) - len(defs) + i].fixed = True
         return lis
     
-@PyGTKCallback
-class FitFunctionList(gtk.VBox):
-    _valid_pygtk_signalnames = ['func-changed']
+class FitFunctionList(Gtk.VBox):
+    __gsignals__ = {'func-changed':(GObject.SignalFlags.RUN_FIRST, None, (object,)), }
     def __init__(self):
-        gtk.VBox.__init__(self)
+        Gtk.VBox.__init__(self)
         self.funcs = []
-        hb = gtk.HBox()
-        self.pack_start(hb, False)
-        l = gtk.Label('Function:')
+        hb = Gtk.HBox()
+        self.pack_start(hb, False, True, 0)
+        l = Gtk.Label(label='Function:')
         l.set_alignment(0, 0.5)
-        hb.pack_start(l)
-        self.combo = gtk.combo_box_new_text()
-        hb.pack_start(self.combo)
+        hb.pack_start(l, True, True, 0)
+        self.combo = Gtk.ComboBoxText()
+        hb.pack_start(self.combo, True, True, 0)
         self.combo.connect('changed', self.on_func_selected)
-        frame = gtk.Frame('Description:')
-        self.pack_start(frame)
-        sw = gtk.ScrolledWindow()
+        frame = Gtk.Frame(label='Description:')
+        self.pack_start(frame, True, True, 0)
+        sw = Gtk.ScrolledWindow()
         frame.add(sw)
-        self.helptext = gtk.TextView()
+        self.helptext = Gtk.TextView()
         self.helptext.set_editable(False)
         self.helptext.set_cursor_visible(False)
         sw.add(self.helptext)
-        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        sw.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         self.show_all()
     def load_functions(self, module=None, clear_before=True):
         if clear_before:
@@ -569,32 +571,34 @@ class FitParam(object):
         else:
             self.value = ErrorValue(value, error)
 
-@PyGTKCallback
-class FitParamList(gtk.ScrolledWindow):
+class FitParamList(Gtk.ScrolledWindow):
+    __gsignals__ = {'params-changed':(GObject.SignalFlags.RUN_FIRST, None, ()),
+                  }
+    
     def __init__(self, params=None):
         self._history = []
         self._histposition = -1
         self._committed = True
-        gtk.ScrolledWindow.__init__(self)
-        self.model = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_BOOLEAN, gobject.TYPE_STRING, gobject.TYPE_STRING)
+        Gtk.ScrolledWindow.__init__(self)
+        self.model = Gtk.ListStore(GObject.TYPE_STRING, GObject.TYPE_BOOLEAN, GObject.TYPE_STRING, GObject.TYPE_STRING)
         
-        self.treeview = gtk.TreeView(self.model)
+        self.treeview = Gtk.TreeView(self.model)
         self.add(self.treeview)
         self.treeview.set_headers_visible(True)
         self.treeview.set_rules_hint(True)
-        tvc = gtk.TreeViewColumn('Parameter', gtk.CellRendererText(), text=0)
+        tvc = Gtk.TreeViewColumn('Parameter', Gtk.CellRendererText(), text=0)
         self.treeview.append_column(tvc)
-        crt = gtk.CellRendererToggle()
+        crt = Gtk.CellRendererToggle()
         crt.set_radio(False)
         crt.connect('toggled', self.on_fixed_changed)
-        tvc = gtk.TreeViewColumn('Fixed', crt, active=1)
+        tvc = Gtk.TreeViewColumn('Fixed', crt, active=1)
         self.treeview.append_column(tvc)
-        crt = gtk.CellRendererText()
+        crt = Gtk.CellRendererText()
         crt.set_property('editable', True)
         crt.connect('edited', self.on_value_changed)
-        tvc = gtk.TreeViewColumn('Value', crt, text=2)
+        tvc = Gtk.TreeViewColumn('Value', crt, text=2)
         self.treeview.append_column(tvc)
-        tvc = gtk.TreeViewColumn('Error', gtk.CellRendererText(), text=3)
+        tvc = Gtk.TreeViewColumn('Error', Gtk.CellRendererText(), text=3)
         self.treeview.append_column(tvc)
         
         self.update_model(params)

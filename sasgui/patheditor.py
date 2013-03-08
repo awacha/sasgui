@@ -4,15 +4,15 @@ Created on Apr 19, 2012
 @author: andris
 '''
 
-import gtk
-import gobject
+from gi.repository import Gtk
+from gi.repository import GObject
 import os
 
 from sastool import misc
 
 __all__ = ['PathEditor', 'pathedit']
 
-class PathEditor(gtk.Dialog):
+class PathEditor(Gtk.Dialog):
     def __init__(self, parent=None, pathlist=None):
         if parent is not None:
             parent = parent.get_toplevel()
@@ -22,60 +22,60 @@ class PathEditor(gtk.Dialog):
             pathlist = misc.searchpath.SearchPath(pathlist)
         self.pathlist = pathlist
 
-        gtk.Dialog.__init__(self, 'Edit sastool search path...', parent,
-                            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-                            (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                             gtk.STOCK_OK, gtk.RESPONSE_OK))
-        self.set_default_response(gtk.RESPONSE_CANCEL)
-        hbox = gtk.HBox()
-        self.get_content_area().pack_start(hbox)
+        Gtk.Dialog.__init__(self, 'Edit sastool search path...', parent,
+                            Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                             Gtk.STOCK_OK, Gtk.ResponseType.OK))
+        self.set_default_response(Gtk.ResponseType.CANCEL)
+        hbox = Gtk.HBox()
+        self.get_content_area().pack_start(hbox, True, True, 0)
 
-        sw = gtk.ScrolledWindow()
-        hbox.pack_start(sw)
+        sw = Gtk.ScrolledWindow()
+        hbox.pack_start(sw, True, True, 0)
 
-        self.pathstore = gtk.ListStore(gobject.TYPE_STRING)
-        self.tw = gtk.TreeView(self.pathstore)
+        self.pathstore = Gtk.ListStore(GObject.TYPE_STRING)
+        self.tw = Gtk.TreeView(self.pathstore)
         sw.add(self.tw)
         self.tw.set_size_request(300, 150)
-        self.tw.set_grid_lines(gtk.TREE_VIEW_GRID_LINES_HORIZONTAL)
+        self.tw.set_grid_lines(Gtk.TreeViewGridLines.HORIZONTAL)
         self.tw.set_rules_hint(True)
         self.tw.set_reorderable(True)
         self.tw.set_enable_search(True)
 
 
-        pathcolumn = gtk.TreeViewColumn('Folder', gtk.CellRendererText(), text=0)
+        pathcolumn = Gtk.TreeViewColumn('Folder', Gtk.CellRendererText(), text=0)
         self.tw.append_column(pathcolumn)
 
-        bb = gtk.VButtonBox()
-        hbox.pack_start(bb, False)
-        b = gtk.Button(label='Add folder')
+        bb = Gtk.VButtonBox()
+        hbox.pack_start(bb, False, True, 0)
+        b = Gtk.Button(label='Add folder')
         b.connect('clicked', self.callback_add)
         bb.add(b)
-        b = gtk.Button(label='Add current folder')
+        b = Gtk.Button(label='Add current folder')
         b.connect('clicked', self.callback_add, '.')
         bb.add(b)
-        b = gtk.Button(label='Add home folder')
+        b = Gtk.Button(label='Add home folder')
         b.connect('clicked', self.callback_add, os.path.expanduser('~'))
         bb.add(b)
-        b = gtk.Button(stock=gtk.STOCK_GOTO_TOP)
+        b = Gtk.Button(stock=Gtk.STOCK_GOTO_TOP)
         b.connect('clicked', self.callback_move, 'top')
         bb.add(b)
-        b = gtk.Button(stock=gtk.STOCK_GO_UP)
+        b = Gtk.Button(stock=Gtk.STOCK_GO_UP)
         b.connect('clicked', self.callback_move, 'up')
         bb.add(b)
-        b = gtk.Button(stock=gtk.STOCK_GO_DOWN)
+        b = Gtk.Button(stock=Gtk.STOCK_GO_DOWN)
         b.connect('clicked', self.callback_move, 'down')
         bb.add(b)
-        b = gtk.Button(stock=gtk.STOCK_GOTO_BOTTOM)
+        b = Gtk.Button(stock=Gtk.STOCK_GOTO_BOTTOM)
         b.connect('clicked', self.callback_move, 'bottom')
         bb.add(b)
-        b = gtk.Button(stock=gtk.STOCK_REMOVE)
+        b = Gtk.Button(stock=Gtk.STOCK_REMOVE)
         b.connect('clicked', self.callback_remove)
         bb.add(b)
-        b = gtk.Button(stock=gtk.STOCK_CLEAR)
+        b = Gtk.Button(stock=Gtk.STOCK_CLEAR)
         b.connect('clicked', self.callback_clear)
         bb.add(b)
-        b = gtk.Button(stock=gtk.STOCK_SAVE)
+        b = Gtk.Button(stock=Gtk.STOCK_SAVE)
         b.connect('clicked', self.callback_savedefault)
         bb.add(b)
 
@@ -85,7 +85,7 @@ class PathEditor(gtk.Dialog):
         self.hide()
     def run(self, *args, **kwargs):
         self.update_from_search_path()
-        return gtk.Dialog.run(self, *args, **kwargs)
+        return Gtk.Dialog.run(self, *args, **kwargs)
     def update_from_search_path(self):
         self.pathstore.clear()
         for k in self.pathlist:
@@ -131,28 +131,28 @@ class PathEditor(gtk.Dialog):
             self.pathstore.prepend([folder])
             return True
         if not hasattr(self, '_filechooser_for_add'):
-            self._filechooser_for_add = gtk.FileChooserDialog(title='Choose folder...',
-                parent=self, action=gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                buttons=(gtk.STOCK_OK, gtk.RESPONSE_OK, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+            self._filechooser_for_add = Gtk.FileChooserDialog(title='Choose folder...',
+                parent=self, action=Gtk.FileChooserAction.SELECT_FOLDER,
+                buttons=(Gtk.STOCK_OK, Gtk.ResponseType.OK, Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
             self._filechooser_for_add.set_modal(True)
             self._filechooser_for_add.set_transient_for(self)
             self._filechooser_for_add.set_destroy_with_parent(True)
-            hbox = gtk.HBox()
-            self._filechooser_for_add.withsubfolders = gtk.CheckButton('Recursive add')
+            hbox = Gtk.HBox()
+            self._filechooser_for_add.withsubfolders = Gtk.CheckButton('Recursive add')
             self._filechooser_for_add.withsubfolders.set_active(True)
-            self._filechooser_for_add.recursedepth = gtk.SpinButton()
+            self._filechooser_for_add.recursedepth = Gtk.SpinButton()
             self._filechooser_for_add.recursedepth.set_digits(0)
             self._filechooser_for_add.recursedepth.set_value(1)
             self._filechooser_for_add.recursedepth.set_increments(1, 10)
             self._filechooser_for_add.recursedepth.set_range(1, 100)
-            hbox.pack_start(self._filechooser_for_add.withsubfolders, False)
-            l = gtk.Label('    Recursion depth:')
+            hbox.pack_start(self._filechooser_for_add.withsubfolders, False, True, 0)
+            l = Gtk.Label(label='    Recursion depth:')
             l.set_alignment(0, 0.5)
-            hbox.pack_start(l, False)
-            hbox.pack_start(self._filechooser_for_add.recursedepth, False)
+            hbox.pack_start(l, False, True, 0)
+            hbox.pack_start(self._filechooser_for_add.recursedepth, False, True, 0)
             hbox.show_all()
             self._filechooser_for_add.set_extra_widget(hbox)
-        if self._filechooser_for_add.run() == gtk.RESPONSE_OK:
+        if self._filechooser_for_add.run() == Gtk.ResponseType.OK:
             folder = self._filechooser_for_add.get_filename()
             folder_slashes = os.path.abspath(folder).count(os.sep)
             recursedepth = self._filechooser_for_add.recursedepth.get_value_as_int()
@@ -172,6 +172,6 @@ class PathEditor(gtk.Dialog):
 
 def pathedit(mainwindow=None, searchpath=None):
     pe = PathEditor(mainwindow, searchpath)
-    if pe.run() == gtk.RESPONSE_OK:
+    if pe.run() == Gtk.ResponseType.OK:
         pe.update_search_path()
     pe.destroy()

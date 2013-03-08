@@ -1,30 +1,30 @@
 import re
-import gtk
-
-from PyGTKCallback import PyGTKCallback
+from gi.repository import Gtk
+from gi.repository import GObject
 
 __all__ = ['Periodic', 'PeriodicButton']
 
-@PyGTKCallback
-class Periodic(gtk.Table):
+class Periodic(Gtk.Table):
+    __gsignals__ = {'select-element':(GObject.SignalFlags.RUN_FIRST, None, (str, int)),
+                  }
     table_list = "H\tHe\nLiBe\tBCNOFNe\nNaMg\tAlSiPSClAr\nKCa\tScTiVCrMnFeCoNiCuZnGaGeAsSeBrKr\nRbSr\tYZrNbMoTcRuRhPdAgCdInSnSbTeIXe\nCsBa(LaCePrNdPmSmEuGdTbDyHoErTmYbLu)HfTaWReOsIrPtAuHgTlPbBiPoAtRn\nFrRa(AcThPaUNpPuAmCmBkCfEsFmMdNoLr)RfHaSgBhHsMt"
-    class LaAc(gtk.Window):
+    class LaAc(Gtk.Window):
         def __init__(self, parent, elist):
-            gtk.Window.__init__(self, gtk.WINDOW_POPUP)
+            Gtk.Window.__init__(self, Gtk.WindowType.POPUP)
             self.my_parent = parent
-            t = gtk.Table(1, len(elist))
+            t = Gtk.Table(1, len(elist))
             self.add(t)
             icolumn1 = 0;
             for e1 in elist:
-                b1 = gtk.Button(label=e1)
+                b1 = Gtk.Button(label=e1)
                 b1.connect('clicked', self.click, e1, self.my_parent.elements[e1])
-                t.attach(b1, icolumn1, icolumn1 + 1, 0, 1, gtk.EXPAND | gtk.FILL, gtk.EXPAND | gtk.FILL)
+                t.attach(b1, icolumn1, icolumn1 + 1, 0, 1, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL)
                 icolumn1 += 1
-            b1 = gtk.Button(label='Cancel')
+            b1 = Gtk.Button(label='Cancel')
             b1.connect('clicked', self.popdown)
-            t.attach(b1, icolumn1, icolumn1 + 1, 0, 1, gtk.EXPAND | gtk.FILL, gtk.EXPAND | gtk.FILL, 10)
+            t.attach(b1, icolumn1, icolumn1 + 1, 0, 1, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, 10)
         def popup(self, *args, **kwargs):
-            self.set_position(gtk.WIN_POS_MOUSE)
+            self.set_position(Gtk.WindowPosition.MOUSE)
             self.set_modal(True)
             self.show_all()
         def popdown(self, *args, **kwargs):
@@ -33,7 +33,7 @@ class Periodic(gtk.Table):
             self.popdown()
             self.my_parent.select(self, element, atnumber)
     def __init__(self):
-        gtk.Table.__init__(self, 7, 18)
+        Gtk.Table.__init__(self, 7, 18)
         self.elements = dict(zip(re.findall('([A-Z][a-z]*)', self.table_list), range(1, 200)))
         iline = 0
         for line in self.table_list.split('\n'):
@@ -46,35 +46,37 @@ class Periodic(gtk.Table):
             for e in re.findall('(?:[A-Z][a-z]*)|(?:\((?:[A-Z][a-z]*)*\))', firstpart):
                 if e.startswith('('):
                     elist = re.findall('[A-Z][a-z]*', e)
-                    b = gtk.Button(label='%s*' % (elist[0]))
+                    b = Gtk.Button(label='%s*' % (elist[0]))
                     w1 = self.LaAc(self, elist)
                     b.connect('clicked', w1.popup)
                 else:
-                    b = gtk.Button(label=e)
+                    b = Gtk.Button(label=e)
                     b.connect("clicked", self.select, e, self.elements[e])
-                self.attach(b, icolumn, icolumn + 1, iline, iline + 1, gtk.EXPAND | gtk.FILL, gtk.EXPAND | gtk.FILL)
+                self.attach(b, icolumn, icolumn + 1, iline, iline + 1, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL)
                 icolumn += 1
             icolumn = 17
             for e in reversed(re.findall('([A-Z][a-z]*)', lastpart)):
-                b = gtk.Button(label=e)
+                b = Gtk.Button(label=e)
                 b.connect("clicked", self.select, e, self.elements[e])
-                self.attach(b, icolumn, icolumn + 1, iline, iline + 1, gtk.EXPAND | gtk.FILL, gtk.EXPAND | gtk.FILL)
+                self.attach(b, icolumn, icolumn + 1, iline, iline + 1, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL, Gtk.AttachOptions.EXPAND | Gtk.AttachOptions.FILL)
                 icolumn -= 1
             iline += 1
     def select(self, widget, element, atnumber):
         return self.emit('select-element', element, atnumber)
-@PyGTKCallback
-class PeriodicButton(gtk.Button):
+    
+class PeriodicButton(Gtk.Button):
+    __gsignals__ = {'select-element':(GObject.SignalFlags.RUN_FIRST, None, (str, int)),
+                  }
     def __init__(self, element='Cu'):
-        gtk.Button.__init__(self, element)
+        Gtk.Button.__init__(self, element)
         self.my_handlers = []
-        self.popupwindow = gtk.Window(gtk.WINDOW_POPUP)
+        self.popupwindow = Gtk.Window(Gtk.WindowType.POPUP)
         self.periodic = Periodic()
         self.popupwindow.add(self.periodic)
         self.connect('clicked', self.popup)
         self.periodic.connect('select-element', self.selected)
     def popup(self, widget):
-        self.popupwindow.set_position(gtk.WIN_POS_MOUSE)
+        self.popupwindow.set_position(Gtk.WindowPosition.MOUSE)
         self.popupwindow.set_modal(True)
         self.popupwindow.show_all()
     def selected(self, widget, element, atnumber):
@@ -647,9 +649,9 @@ if __name__ == '__main__':
     def dummy_handler(widget):
         print widget.get_element_name(), widget.get_element_number()
 
-    wmain = gtk.Window(gtk.WINDOW_TOPLEVEL)
+    wmain = Gtk.Window(Gtk.WindowType.TOPLEVEL)
     p = PeriodicButton()
     p.connect('select-element', dummy_handler)
     wmain.add(p)
     wmain.show_all()
-    gtk.main()
+    Gtk.main()

@@ -1,32 +1,34 @@
-import gtk
+from gi.repository import Gtk
+from gi.repository import GObject
 import numpy as np
 
-from ..PyGTKCallback import PyGTKCallback
-@PyGTKCallback
-class IntegrateTab(gtk.HBox):
+class IntegrateTab(Gtk.HBox):
+    __gsignals__ = {'integration-done':(GObject.SignalFlags.RUN_FIRST, None, (object, object, str, bool)),
+                    'error':(GObject.SignalFlags.RUN_FIRST, None, (object,)),
+                   }
     def __init__(self):
-        gtk.HBox.__init__(self)
-        tb = gtk.Toolbar()
+        Gtk.HBox.__init__(self)
+        tb = Gtk.Toolbar()
         tb.set_show_arrow(False)
-        tb.set_style(gtk.TOOLBAR_BOTH)
-        self.pack_start(tb, False, True)
+        tb.set_style(Gtk.ToolbarStyle.BOTH)
+        self.pack_start(tb, False, True, 0)
 
-        b = gtk.ToolButton(gtk.STOCK_EXECUTE)
+        b = Gtk.ToolButton(Gtk.STOCK_EXECUTE)
         tb.insert(b, -1)
         b.connect('clicked', self.on_button_clicked, 'execute')
 
-        b = gtk.ToolButton(gtk.STOCK_REFRESH)
+        b = Gtk.ToolButton(Gtk.STOCK_REFRESH)
         tb.insert(b, -1)
         b.connect('clicked', self.on_button_clicked, 'refresh')
 
-        frame = gtk.Frame()
-        self.pack_start(frame, False)
-        tab = gtk.Table()
+        frame = Gtk.Frame()
+        self.pack_start(frame, False, True, 0)
+        tab = Gtk.Table()
         frame.add(tab)
 
-        l = gtk.Label('Method:'); l.set_alignment(0, 0.5)
-        tab.attach(l, 0, 1, 0, 1, gtk.FILL, gtk.FILL)
-        self.intmethod_combo = gtk.combo_box_new_text()
+        l = Gtk.Label(label='Method:'); l.set_alignment(0, 0.5)
+        tab.attach(l, 0, 1, 0, 1, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+        self.intmethod_combo = Gtk.ComboBoxText()
         tab.attach(self.intmethod_combo, 1, 2, 0, 1)
         self.intmethod_combo.append_text('Full radial')
         self.intmethod_combo.append_text('Sector')
@@ -34,40 +36,40 @@ class IntegrateTab(gtk.HBox):
         self.intmethod_combo.append_text('Azimuthal')
         self.intmethod_combo.connect('changed', self.on_intmethod_changed)
 
-        l = gtk.Label('Abscissa:'); l.set_alignment(0, 0.5)
-        tab.attach(l, 0, 1, 1, 2, gtk.FILL, gtk.FILL)
-        self.abscissa_combo = gtk.combo_box_new_text()
+        l = Gtk.Label(label='Abscissa:'); l.set_alignment(0, 0.5)
+        tab.attach(l, 0, 1, 1, 2, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+        self.abscissa_combo = Gtk.ComboBoxText()
         tab.attach(self.abscissa_combo, 1, 2, 1, 2)
         self.abscissa_combo.append_text('q')
         self.abscissa_combo.append_text('pixel')
         self.abscissa_combo.set_active(0)
 
-        self.Nbins_checkbutton = gtk.CheckButton('Nr of bins:')
-        tab.attach(self.Nbins_checkbutton, 0, 1, 2, 3, gtk.FILL, gtk.FILL)
-        self.Nbins_entry = gtk.Entry()
+        self.Nbins_checkbutton = Gtk.CheckButton('Nr of bins:')
+        tab.attach(self.Nbins_checkbutton, 0, 1, 2, 3, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+        self.Nbins_entry = Gtk.Entry()
         self.Nbins_checkbutton.connect('toggled', self.on_checkbutton_changed, self.Nbins_entry)
         tab.attach(self.Nbins_entry, 1, 2, 2, 3)
         self.on_checkbutton_changed(self.Nbins_checkbutton, self.Nbins_entry)
 
-        self.minabscissa_checkbutton = gtk.CheckButton('Min. abscissa:')
-        tab.attach(self.minabscissa_checkbutton, 2, 3, 0, 1, gtk.FILL, gtk.FILL)
-        self.minabscissa_entry = gtk.Entry()
+        self.minabscissa_checkbutton = Gtk.CheckButton('Min. abscissa:')
+        tab.attach(self.minabscissa_checkbutton, 2, 3, 0, 1, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+        self.minabscissa_entry = Gtk.Entry()
         self.minabscissa_entry.set_text('0.001')
         self.minabscissa_checkbutton.connect('toggled', self.on_checkbutton_changed, self.minabscissa_entry)
         tab.attach(self.minabscissa_entry, 3, 4, 0, 1)
         self.on_checkbutton_changed(self.minabscissa_checkbutton, self.minabscissa_entry)
 
-        self.maxabscissa_checkbutton = gtk.CheckButton('Max. abscissa:')
-        tab.attach(self.maxabscissa_checkbutton, 2, 3, 1, 2, gtk.FILL, gtk.FILL)
-        self.maxabscissa_entry = gtk.Entry()
+        self.maxabscissa_checkbutton = Gtk.CheckButton('Max. abscissa:')
+        tab.attach(self.maxabscissa_checkbutton, 2, 3, 1, 2, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+        self.maxabscissa_entry = Gtk.Entry()
         self.maxabscissa_entry.set_text('100')
         self.maxabscissa_checkbutton.connect('toggled', self.on_checkbutton_changed, self.maxabscissa_entry)
         tab.attach(self.maxabscissa_entry, 3, 4, 1, 2)
         self.on_checkbutton_changed(self.maxabscissa_checkbutton, self.maxabscissa_entry)
 
-        l = gtk.Label('Abscissa spacing:'); l.set_alignment(0, 0.5)
-        tab.attach(l, 2, 3, 2, 3, gtk.FILL, gtk.FILL)
-        self.abscissascaling_combo = gtk.combo_box_new_text()
+        l = Gtk.Label(label='Abscissa spacing:'); l.set_alignment(0, 0.5)
+        tab.attach(l, 2, 3, 2, 3, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+        self.abscissascaling_combo = Gtk.ComboBoxText()
         tab.attach(self.abscissascaling_combo, 3, 4, 2, 3)
         self.abscissascaling_combo.append_text('linear')
         self.abscissascaling_combo.append_text('logarithmic')
@@ -75,12 +77,12 @@ class IntegrateTab(gtk.HBox):
         self.extralabels = []
         self.extraentries = []
         for i in range(2):
-            self.extralabels.append(gtk.Label())
+            self.extralabels.append(Gtk.Label())
             self.extralabels[-1].set_alignment(0, 0.5)
-            tab.attach(self.extralabels[-1], 4, 5, i, i + 1, gtk.FILL, gtk.FILL)
-            self.extraentries.append(gtk.Entry())
+            tab.attach(self.extralabels[-1], 4, 5, i, i + 1, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
+            self.extraentries.append(Gtk.Entry())
             tab.attach(self.extraentries[-1], 5, 6, i, i + 1)
-        self.extracb = gtk.CheckButton()
+        self.extracb = Gtk.CheckButton()
         self.extracb.set_alignment(0, 0.5)
         self.extracb.connect('toggled', self.on_extracb_toggled)
         tab.attach(self.extracb, 4, 6, 2, 3)
@@ -158,7 +160,7 @@ class IntegrateTab(gtk.HBox):
     def on_checkbutton_changed(self, cb, entry):
         entry.set_sensitive(cb.get_active())
         return True
-    def on_button_clicked(self, button, argument): #IGNORE:W0613
+    def on_button_clicked(self, button, argument):  # IGNORE:W0613
         data = self.get_toplevel().data
         if data is None:
             return False

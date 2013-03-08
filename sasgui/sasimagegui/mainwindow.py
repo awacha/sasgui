@@ -1,6 +1,9 @@
-import gtk
+from gi.repository import Gtk
+from gi.repository import GObject
+
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg, NavigationToolbar2GTKAgg
+from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg
+from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3
 
 from filetab import FileTab
 from plottab import PlotTab
@@ -25,33 +28,33 @@ class SASImageGuiExceptHook():
         self.oldexcepthook = sys.excepthook
         sys.excepthook = self
     def __call__(self, type_, value, traceback_):
-        dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK,
+        dialog = Gtk.MessageDialog(None, Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR, Gtk.ButtonsType.OK,
                                    str(type_) + ': ' + str(value))
         dialog.format_secondary_text('Traceback:')
         msgarea = dialog.get_message_area()
-        sw = gtk.ScrolledWindow()
+        sw = Gtk.ScrolledWindow()
         sw.set_size_request(200, 300)
-        msgarea.pack_start(sw)
-        tv = gtk.TextView()
+        msgarea.pack_start(sw, True, True, 0)
+        tv = Gtk.TextView()
         sw.add(tv)
         tv.get_buffer().set_text('\n'.join(traceback.format_tb(traceback_)))
         tv.set_editable(False)
-        tv.set_wrap_mode(gtk.WRAP_WORD)
-        #tv.get_default_attributes().font = pango.FontDescription('serif,monospace')
-        tv.set_justification(gtk.JUSTIFY_LEFT)
+        tv.set_wrap_mode(Gtk.WrapMode.WORD)
+        # tv.get_default_attributes().font = Pango.FontDescription('serif,monospace')
+        tv.set_justification(Gtk.Justification.LEFT)
         msgarea.show_all()
         dialog.set_title('Error!')
         dialog.run()
         dialog.destroy()
         return None
-        #self.oldexcepthook(type_, value, traceback)
+        # self.oldexcepthook(type_, value, traceback)
     def __del__(self):
-        #THIS IS NOT QUITE OK: other excepthooks registered after SASImageGuieExceptHook will
+        # THIS IS NOT QUITE OK: other excepthooks registered after SASImageGuieExceptHook will
         # be quietly removed.
         if self.oldexcepthook is not None:
             sys.excepthook = self.oldexcepthook
 
-class SASImageGuiMain(gtk.Window):
+class SASImageGuiMain(Gtk.Window):
     _instances = []
     def __init__(self):
         SASImageGuiMain._instances.append(self)
@@ -59,21 +62,21 @@ class SASImageGuiMain(gtk.Window):
             SASImageGuiMain._excepthook = SASImageGuiExceptHook()
         except RuntimeError:
             pass
-        gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
+        Gtk.Window.__init__(self, Gtk.WindowType.TOPLEVEL)
 
         self.connect('delete-event', self.on_delete)
         self.fig = Figure(figsize=(0.5, 0.4), dpi=72)
         self.axes = self.fig.add_subplot(111)
 
-        vbox = gtk.VBox()
+        vbox = Gtk.VBox()
         self.add(vbox)
-        self.ribbon = gtk.Notebook()
-        vbox.pack_start(self.ribbon, False)
+        self.ribbon = Gtk.Notebook()
+        vbox.pack_start(self.ribbon, False, True, 0)
         self.ribbon.set_scrollable(True)
         self.ribbon.popup_enable()
 
         self.ribbon_File = FileTab()
-        self.ribbon.append_page(self.ribbon_File, gtk.Label('File'))
+        self.ribbon.append_page(self.ribbon_File, Gtk.Label(label='File'))
         self.ribbon.set_tab_detachable(self.ribbon_File, True)
         self.ribbon_File.connect('new-clicked', self.on_file, 'newwindow')
         self.ribbon_File.connect('close-clicked', self.on_file, 'closewindow')
@@ -81,24 +84,24 @@ class SASImageGuiMain(gtk.Window):
         self.ribbon_File.connect('opened', self.on_file_opened)
 
         self.ribbon_Plot = PlotTab()
-        self.ribbon.append_page(self.ribbon_Plot, gtk.Label('Plot'))
+        self.ribbon.append_page(self.ribbon_Plot, Gtk.Label(label='Plot'))
         self.ribbon_Plot.connect('clear-graph', self.on_plot, 'clear-graph')
         self.ribbon_Plot.connect('refresh-graph', self.on_plot, 'refresh-graph')
         self.ribbon_Plot.connect('plotparams-changed', self.on_plot, 'refresh-graph')
 
         self.ribbon_Mask = MaskTab()
-        self.ribbon.append_page(self.ribbon_Mask, gtk.Label('Mask'))
+        self.ribbon.append_page(self.ribbon_Mask, Gtk.Label(label='Mask'))
         self.ribbon_Mask.connect('new-mask', self.on_mask, 'new-mask')
         self.ribbon_Mask.connect('edit-mask', self.on_mask, 'edit-mask')
 
         self.ribbon_Centering = CenteringTab()
-        self.ribbon.append_page(self.ribbon_Centering, gtk.Label('Centering'))
+        self.ribbon.append_page(self.ribbon_Centering, Gtk.Label(label='Centering'))
         self.ribbon_Centering.connect('crosshair', self.on_center)
         self.ribbon_Centering.connect('docentering', self.on_center)
         self.ribbon_Centering.connect('manual-beampos', self.on_center)
 
         self.ribbon_Integrate = IntegrateTab()
-        self.ribbon.append_page(self.ribbon_Integrate, gtk.Label('Integrate'))
+        self.ribbon.append_page(self.ribbon_Integrate, Gtk.Label(label='Integrate'))
         self.ribbon_Integrate.connect('integration-done', self.on_integration_done)
 
         for k in self.ribbon.get_children():
@@ -106,19 +109,19 @@ class SASImageGuiMain(gtk.Window):
             self.ribbon.set_tab_reorderable(k, True)
             k.connect('error', self.on_error)
 
-        self.canvas = FigureCanvasGTKAgg(self.fig)
+        self.canvas = FigureCanvasGTK3Agg(self.fig)
         self.canvas.set_size_request(800, 400)
         vbox.pack_start(self.canvas, True, True, 0)
 
-        self.graphtoolbar = NavigationToolbar2GTKAgg(self.canvas, vbox)
-        vbox.pack_start(self.graphtoolbar, False)
+        self.graphtoolbar = NavigationToolbar2GTK3(self.canvas, vbox)
+        vbox.pack_start(self.graphtoolbar, False, True, 0)
 
-        self.statusbar = gtk.Statusbar()
-        vbox.pack_start(self.statusbar, False)
-
+        self.statusbar = Gtk.Statusbar()
+        vbox.pack_start(self.statusbar, False, True, 0)
         self.show_all()
         self.hide()
-    def on_file(self, widget, argument): #IGNORE:W0613
+        
+    def on_file(self, widget, argument):  # IGNORE:W0613
         if argument == 'newwindow':
             newinstance = SASImageGuiMain()
             newinstance.show_all()
@@ -126,25 +129,25 @@ class SASImageGuiMain(gtk.Window):
             self.destroy()
             self.on_delete(None, None)
         elif argument == 'quitprogram':
-            gtk.main_quit()
+            Gtk.main_quit()
         return True
-    def on_delete(self, widget, event, *args): #IGNORE:W0613
+    def on_delete(self, widget, event, *args):  # IGNORE:W0613
         SASImageGuiMain._instances.remove(self)
         if not SASImageGuiMain._instances:
-            gtk.main_quit()
+            Gtk.main_quit()
         return False
-    def on_file_opened(self, widget, data): #IGNORE:W0613
+    def on_file_opened(self, widget, data):  # IGNORE:W0613
         self.statusbar.remove_all(self.statusbar.get_context_id('sastool'))
         self.statusbar.push(self.statusbar.get_context_id('sastool'), 'File opened.')
         self.ribbon_Plot.update_from_data(data)
         self.ribbon_Integrate.update_from_data(data)
         self.on_plot(None, 'refresh-graph')
         return True
-    def on_error(self, widget, error): #IGNORE:W0613
+    def on_error(self, widget, error):  # IGNORE:W0613
         self.statusbar.remove_all(self.statusbar.get_context_id('sastool'))
         self.statusbar.push(self.statusbar.get_context_id('sastool'), 'Error: ' + unicode(error))
         return True
-    def on_plot(self, widget, argument): #IGNORE:W0613
+    def on_plot(self, widget, argument):  # IGNORE:W0613
         if argument == 'clear-graph':
             self.fig.clf()
             self.axes = self.fig.add_subplot(1, 1, 1)
@@ -155,19 +158,19 @@ class SASImageGuiMain(gtk.Window):
         return True
     def get_data(self):
         return self.ribbon_File.data
-    def on_mask(self, widget, argument): #IGNORE:W0613
+    def on_mask(self, widget, argument):  # IGNORE:W0613
         if self.data is None:
             return False
         if argument == 'new-mask':
             self.data.set_mask(self.data.Intensity * 0 + 1)
         elif argument == 'edit-mask':
             mm = maskmaker.MaskMaker(parent=self, matrix=self.ribbon_Plot.lastplotraw, mask=self.data.mask)
-            if mm.run() == gtk.RESPONSE_OK:
+            if mm.run() == Gtk.ResponseType.OK:
                 self.data.set_mask(SASMask(mm.get_mask(), maskid=mm.maskid))
             mm.destroy()
         self.ribbon_Integrate.update_from_data(self.data)
         self.on_plot(None, 'refresh-graph')
-    def on_center(self, widget, method, *args): #IGNORE:W0613
+    def on_center(self, widget, method, args):  # IGNORE:W0613
         if method == 'crosshair':
             ax = self.axes.axis()
             centercoords = (0.5 * (ax[2] + ax[3]), 0.5 * (ax[0] + ax[1]))
@@ -178,24 +181,24 @@ class SASImageGuiMain(gtk.Window):
             centercoords = args[:2]
             method = 'manual setting'
         elif hasattr(self.data, 'find_beam_' + method):
-            dialog = gtk.Dialog('Finding beam center...', self.get_toplevel(), gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-                              (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
-            dialog.set_default_response(gtk.RESPONSE_CANCEL)
-            l = gtk.Label('Centering, please wait...'); l.set_alignment(0, 0.5)
-            dialog.get_content_area().pack_start(l)
-            pb = gtk.ProgressBar()
-            dialog.get_content_area().pack_start(pb)
-            def closedialogfunction(*args, **kwargs): #IGNORE:W0613
-                dialog.hide_all()
-            dialog.get_widget_for_response(gtk.RESPONSE_CANCEL).connect('clicked', closedialogfunction)
+            dialog = Gtk.Dialog('Finding beam center...', self.get_toplevel(), Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                              (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
+            dialog.set_default_response(Gtk.ResponseType.CANCEL)
+            l = Gtk.Label('Centering, please wait...'); l.set_alignment(0, 0.5)
+            dialog.get_content_area().pack_start(l, True, True, 0)
+            pb = Gtk.ProgressBar()
+            dialog.get_content_area().pack_start(pb, True, True, 0)
+            def closedialogfunction(*args, **kwargs):  # IGNORE:W0613
+                dialog.hide()
+            dialog.get_widget_for_response(Gtk.ResponseType.CANCEL).connect('clicked', closedialogfunction)
             dialog.connect('delete-event', closedialogfunction)
             dialog.show_all()
-            while gtk.events_pending():
-                gtk.main_iteration_do(False)
+            while Gtk.events_pending():
+                Gtk.main_iteration_do(False)
             def callbackfunction():
                 pb.pulse()
-                while gtk.events_pending():
-                    gtk.main_iteration_do(False)
+                while Gtk.events_pending():
+                    Gtk.main_iteration_do(False)
                 if not dialog.get_visible():
                     raise GUIStopFittingException
             try:
@@ -213,7 +216,7 @@ class SASImageGuiMain(gtk.Window):
             self.ribbon_Centering.set_beampos(centercoords)
             self.ribbon_Integrate.update_from_data(self.data)
             self.on_plot(None, 'refresh-graph')
-    def on_integration_done(self, widget, curve, retmask, mode, radiustype): #IGNORE:W0613
+    def on_integration_done(self, widget, curve, retmask, mode, radiustype):  # IGNORE:W0613
         self.fig.clf()
         self.axes = self.fig.add_subplot(1, 2, 1)
         mask1 = self.data.mask

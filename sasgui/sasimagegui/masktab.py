@@ -1,22 +1,25 @@
-import gtk
+from gi.repository import Gtk
+from gi.repository import GObject
 
-from ..PyGTKCallback import PyGTKCallback
-@PyGTKCallback
-class MaskTab(gtk.HBox):
+class MaskTab(Gtk.HBox):
+    __gsignals__ = {'new-mask':(GObject.SignalFlags.RUN_FIRST, None, ()),
+                    'edit-mask':(GObject.SignalFlags.RUN_FIRST, None, ()),
+                    'error':(GObject.SignalFlags.RUN_FIRST, None, (object,)),
+                    }
     def __init__(self):
-        gtk.HBox.__init__(self)
-        tb = gtk.Toolbar()
+        Gtk.HBox.__init__(self)
+        tb = Gtk.Toolbar()
         tb.set_show_arrow(False)
-        tb.set_style(gtk.TOOLBAR_BOTH)
-        self.pack_start(tb, False, True)
+        tb.set_style(Gtk.ToolbarStyle.BOTH)
+        self.pack_start(tb, False, True, 0)
 
-        b = gtk.ToolButton(gtk.STOCK_NEW)
+        b = Gtk.ToolButton(Gtk.STOCK_NEW)
         tb.insert(b, -1)
         b.connect('clicked', self.on_button_clicked, 'new-mask')
 
-        b = gtk.ToolButton(gtk.STOCK_EDIT)
+        b = Gtk.ToolButton(Gtk.STOCK_EDIT)
         tb.insert(b, -1)
         b.connect('clicked', self.on_button_clicked, 'edit-mask')
 
-    def on_button_clicked(self, widget, argument): #IGNORE:W0613
+    def on_button_clicked(self, widget, argument):  # IGNORE:W0613
         self.emit(argument)

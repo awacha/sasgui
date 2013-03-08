@@ -1,6 +1,7 @@
-import gtk
+from gi.repository import Gtk
+from gi.repository import GObject
 import matplotlib
-matplotlib.use('GTKAgg')
+matplotlib.use('GTK3Agg')
 
 import sasimagegui
 import maskmaker

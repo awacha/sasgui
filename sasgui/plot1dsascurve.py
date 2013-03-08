@@ -1,26 +1,28 @@
-import gtk
+from gi.repository import Gtk
+from gi.repository import GObject
 from .fitter import Fitter
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg, NavigationToolbar2GTKAgg
+from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg
+from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3
 import sastool
 import time
 __all__ = ['PlotSASCurve', 'PlotSASCurveWindow']
 
 
-class PlotSASCurve(gtk.HBox):
+class PlotSASCurve(Gtk.HBox):
     def __init__(self, *args, **kwargs):
-        gtk.HBox.__init__(self, *args, **kwargs)
-        ex = gtk.Expander('Fitting...')
+        Gtk.HBox.__init__(self, *args, **kwargs)
+        ex = Gtk.Expander(label='Fitting...')
         ex.get_label_widget().set_angle(90)
-        self.pack_start(ex, False)
-        vbox_fig = gtk.VBox()
-        self.pack_start(vbox_fig)
+        self.pack_start(ex, False, True, 0)
+        vbox_fig = Gtk.VBox()
+        self.pack_start(vbox_fig, True, True, 0)
         self.fig = Figure(figsize=(0.2, 0.2), dpi=72)
-        self.canvas = FigureCanvasGTKAgg(self.fig)
+        self.canvas = FigureCanvasGTK3Agg(self.fig)
         self.canvas.set_size_request(640, 480)
-        vbox_fig.pack_start(self.canvas)
-        tb = NavigationToolbar2GTKAgg(self.canvas, None)
-        vbox_fig.pack_start(tb, False)
+        vbox_fig.pack_start(self.canvas, True, True, 0)
+        tb = NavigationToolbar2GTK3(self.canvas, None)
+        vbox_fig.pack_start(tb, False, True, 0)
         self.fitter = Fitter(axes=self.gca())
         ex.add(self.fitter)
         ex.connect('notify::expanded', self.on_expand)
@@ -91,15 +93,15 @@ class PlotSASCurve(gtk.HBox):
     def axis(self, *args, **kwargs):
         return self.gca().axis(*args, **kwargs)
     
-class PlotSASCurveWindow(gtk.Dialog):
+class PlotSASCurveWindow(Gtk.Dialog):
     __gsignals__ = {'delete-event':'override'}
     _instance_list = []
-    def __init__(self, title='Curve', parent=None, flags=gtk.DIALOG_DESTROY_WITH_PARENT, buttons=()):
-        gtk.Dialog.__init__(self, title, parent, flags, buttons)
-        self.set_default_response(gtk.RESPONSE_OK)
+    def __init__(self, title='Curve', parent=None, flags=Gtk.DialogFlags.DESTROY_WITH_PARENT, buttons=()):
+        Gtk.Dialog.__init__(self, title, parent, flags, buttons)
+        self.set_default_response(Gtk.ResponseType.OK)
         vb = self.get_content_area()
         self.plotsascurve = PlotSASCurve()
-        vb.pack_start(self.plotsascurve, True)
+        vb.pack_start(self.plotsascurve, True, True, 0)
         PlotSASCurveWindow._instance_list.append(self)
         self._lastfocustime = time.time()
         self.connect('delete-event', self.on_delete)
