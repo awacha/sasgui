@@ -614,7 +614,7 @@ class FitParamList(Gtk.ScrolledWindow):
         self._committed = False
         it = self.model.get_iter(path)
         self.model.set_value(it, 1, not self.model.get_value(it, 1))
-        self.model.set_value(it, 3, 0)
+        self.model.set_value(it, 3, '0')
     def update_model(self, params=None, clear_before=True):
         if clear_before:
             self.model.clear()

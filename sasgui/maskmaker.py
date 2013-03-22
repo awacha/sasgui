@@ -149,6 +149,7 @@ class MaskMaker(Gtk.Dialog):
 
         self.fig = PlotSASImage()
         self.fig.exposure = self.exposure
+        self.fig.set_size_request(640, 480)
         vbox.pack_start(self.fig, True, True, 0)
         self.graphtoolbar = self.fig.figure_toolbar
         self.fig.canvas.mpl_connect('button_press_event', self._on_matplotlib_mouseclick)
@@ -248,21 +249,21 @@ class MaskMaker(Gtk.Dialog):
             if self._mouseclick_mode == 'Pixelhunt':
                 # we are in pixel hunt mode, turn it off
                 self.graphtoolbar_set_sensitive(True)
-                self.toolbar.foreach(lambda x:x.set_sensitive(True))
+                self.toolbar.foreach(lambda x, sen:x.set_sensitive(sen), True)
                 self._mouseclick_mode = None
             else:
                 # we are not pixel hunting, turn it on
                 self._mouseclick_mode = 'Pixelhunt'
                 self._mouseclicks = []
                 self.graphtoolbar_set_sensitive(False)
-                self.toolbar.foreach(lambda x:x.set_sensitive(False))
+                self.toolbar.foreach(lambda x, sen:x.set_sensitive(sen), False)
                 self.pixelhunt_button.set_sensitive(True)
                 self.backup_mask()
             return True
         elif whattodo.find('polygon') >= 0:
             if self._mouseclick_mode == 'LINES':
                 # polygon-ing, stop it.
-                self.toolbar.foreach(lambda x:x.set_sensitive(True))
+                self.toolbar.foreach(lambda x, sen:x.set_sensitive(sen), True)
                 self._mouseclick_mode = None
                 if len(self._mouseclicks) > 2:
                     row = [t[1] for t in self._mouseclicks]
@@ -277,7 +278,7 @@ class MaskMaker(Gtk.Dialog):
                 # start selecting polygons.
                 self._mouseclicks = []
                 self._mouseclick_mode = 'LINES'
-                self.toolbar.foreach(lambda x:x.set_sensitive(False))
+                self.toolbar.foreach(lambda x, sen:x.set_sensitive(sen), False)
                 self.polygon_button.set_sensitive(True)
         elif any(whattodo.find(x) >= 0 for x in ['rectangle', 'circle']):
             try:

@@ -86,7 +86,7 @@ class PlotSASImage(Gtk.VBox):
 
         self.fig = Figure(figsize=(3.75, 2.5), dpi=80)
         self.canvas = FigureCanvasGTK3Agg(self.fig)
-        self.canvas.set_size_request(640, 480)
+        # self.canvas.set_size_request(640, 480)
         self.pack_start(self.canvas, True, True, 0)
         self.connect('parent-set', self.on_parent_set)
         self.exposure = exposure
@@ -245,11 +245,12 @@ class PlotSASImage(Gtk.VBox):
 class PlotSASImageWindow(Gtk.Dialog):
     __gsignals__ = {'delete-event':'override'}
     _instance_list = []
-    def __init__(self, exposure=None, title='Image', parent=None, flags=Gtk.DialogFlags.DESTROY_WITH_PARENT, buttons=()):
+    def __init__(self, exposure=None, title='Image', parent=None, flags=Gtk.DialogFlags.DESTROY_WITH_PARENT, buttons=(), after_draw_cb=None):
         Gtk.Dialog.__init__(self, title, parent, flags, buttons)
         self.set_default_response(Gtk.ResponseType.OK)
         vb = self.get_content_area()
-        self.plot = PlotSASImage(None)
+        self.plot = PlotSASImage(None, after_draw_cb=after_draw_cb)
+        self.plot.set_size_request(640, 480)
         vb.pack_start(self.plot, True, True, 0)
         PlotSASImageWindow._instance_list.append(self)
         self._lastfocustime = time.time()
