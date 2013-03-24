@@ -609,7 +609,6 @@ class FitParamList(Gtk.ScrolledWindow):
             self._committed = False
         except:
             raise 
-            # TODO: notify user
     def on_fixed_changed(self, cellrenderer, path):
         self._committed = False
         it = self.model.get_iter(path)
