@@ -11,6 +11,7 @@ from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3
 import matplotlib
 import numpy as np
 import itertools
+import re
 import gc
 import time
 
@@ -23,6 +24,10 @@ __all__ = ['PlotSASImage', 'PlotSASImageWindow']
 class PlotSASImage(Gtk.VBox):
     _exposure = None
     __gsignals__ = {'delete-event':'override'}
+    _bottomrightdata = None
+    _bottomleftdata = None
+    _topleftdata = None
+    _toprightdata = None
     def __init__(self, exposure=None, after_draw_cb=None):
         Gtk.VBox.__init__(self)
         self.after_draw_cb = after_draw_cb
@@ -93,6 +98,7 @@ class PlotSASImage(Gtk.VBox):
         self.show_all()
         self.hide()
         self.connect('destroy', self.on_delete)
+        self._targets = {}
     def on_delete(self, *args, **kwargs):
         del self._exposure
         self.fig.clf()
@@ -169,6 +175,26 @@ class PlotSASImage(Gtk.VBox):
                 self.qorpixel_toggle.set_sensitive(False)
                 self.qorpixel_toggle.set_active(False)
         return True
+    def get_topleftdata(self):
+        return self._topleftdata
+    def set_topleftdata(self, data):
+        self._topleftdata = data
+        self.draw_image(None, 'uberforce')
+    def get_toprightdata(self):
+        return self._toprightdata
+    def set_toprightdata(self, data):
+        self._toprightdata = data
+        self.draw_image(None, 'uberforce')
+    def get_bottomleftdata(self):
+        return self._bottomleftdata
+    def get_bottomrightdata(self):
+        return self._bottomrightdata
+    def set_bottomleftdata(self, data):
+        self._bottomleftdata = data
+        self.draw_image(None, 'uberforce')
+    def set_bottomrightdata(self, data):
+        self._bottomrightdata = data
+        self.draw_image(None, 'uberforce')
     def get_exposure(self):
         return self._exposure
     exposure = property(get_exposure, set_exposure)
@@ -179,41 +205,43 @@ class PlotSASImage(Gtk.VBox):
         return eval('matplotlib.cm.%s' % palname)
     def get_zscale(self):
         return self.zscale_combo.get_active_text()
+    def clear(self):
+        self.fig.clf()
+        self._targets = {}
+        self.canvas.draw()
     def draw_image(self, widget=None, what='uberforce'):
         if what == 'clear':
-            self.fig.clf()
-            self.canvas.draw()
-            return
+            return self.clear()
         if what == 'uberforce':
-            self.fig.clf()
+            self.clear()
             what = 'force'
         if not isinstance(self.exposure, SASExposure):
             return
-        if len(self.fig.axes) == 0:
-            self.fig.add_subplot(1, 1, 1)
+        if 'plot' not in self._targets:
+            self._targets['plot'] = self.fig.add_subplot(1, 1, 1)
             what = 'force'
-        plot_axes = self.fig.axes[0]
         draw_colorbar = self.colorbar_checkbutton.get_active()
         if draw_colorbar:
             what = 'force'
-        if (what == 'beampos' or what == 'force') and (len(plot_axes.get_lines()) >= 2):
-            for l in plot_axes.get_lines():
+        if (what == 'beampos' or what == 'force') and (len(self._targets['plot'].get_lines()) >= 2):
+            for l in self._targets['plot'].get_lines():
                 l.remove()
-        if (what == 'plotmask' or what == 'force') and (len(plot_axes.get_images()) >= 2):
-            plot_axes.get_images()[1].remove()
+        if (what == 'plotmask' or what == 'force') and (len(self._targets['plot'].get_images()) >= 2):
+            self._targets['plot'].get_images()[1].remove()
         if what == 'force':
             matrixtoplot = 'Intensity'
-            for l in plot_axes.get_images():
+            for l in self._targets['plot'].get_images():
                 l.remove()
-            for l in plot_axes.get_lines():
+            for l in self._targets['plot'].get_lines():
                 l.remove()
         else:
             matrixtoplot = None
 
-        if draw_colorbar and len(self.fig.axes) > 1:
-            draw_colorbar = self.fig.axes[1]
-        if not draw_colorbar and len(self.fig.axes) > 1:
-            self.fig.delaxes(self.fig.axes[1])
+        if draw_colorbar and 'colorbar' in self._targets:
+            draw_colorbar = self._targets['colorbar']
+        if not draw_colorbar and 'colorbar' in self._targets:
+            self.fig.delaxes(self._targets['colorbar'])
+            del self._targets['colorbar']
         if self.lowclip_checkbutton.get_active():
             minvalue = float(self.lowclip_entry.get_text())
         else:
@@ -224,7 +252,8 @@ class PlotSASImage(Gtk.VBox):
         else:
             maxvalue = np.nanmax(self.exposure)
             self.highclip_entry.set_text(str(maxvalue))
-        img, mat = self.exposure.plot2d(axes=plot_axes, return_matrix=True,
+        axes_before_plot = self.fig.get_children()
+        img, mat = self.exposure.plot2d(axes=self._targets['plot'], return_matrix=True,
                                         drawcolorbar=draw_colorbar,
                                         matrix=matrixtoplot,
                                         zscale=self.get_zscale(),
@@ -235,13 +264,92 @@ class PlotSASImage(Gtk.VBox):
                                         drawmask=self.plotmask_checkbutton.get_active() and (what == 'force' or what == 'plotmask'),
                                         qrange_on_axis=self.qorpixel_toggle.get_active(),
                                         )
+        axes_after_plot = self.fig.get_children()
+        if draw_colorbar is True:
+            # the colorbar axes was created by the SASExposure.plot2d() call. It should be the only new axes.
+            cbaxes = [c for c in axes_after_plot if c not in axes_before_plot]
+            if len(cbaxes) != 1:
+                raise ValueError('Cannot determine colorbar axes.')
+            self._targets['colorbar'] = cbaxes[0]
         # put beam center cross-hair lines to top.
-        for l in plot_axes.get_lines():
-            l.set_zorder(max([0] + [x.get_zorder() + 1 for x in plot_axes.get_images()]))
+        for l in self._targets['plot'].get_lines():
+            l.set_zorder(max([0] + [x.get_zorder() + 1 for x in self._targets['plot'].get_images()]))
+        corners = ['bottomleft', 'bottomright', 'topleft', 'topright']
+        if what != 'force':
+            corners = [c for c in corners if c == what]
+            
+        for what_ in corners:
+            data = self.__getattribute__('_%sdata' % what_)
+            if data is None: 
+                if what_ in self._targets:
+                    if isinstance(self._targets[what_], matplotlib.text.Text):
+                        try:
+                            self.fig.texts.remove(self._targets[what_])
+                            del self._targets[what_]
+                        except ValueError:
+                            pass
+                    elif isinstance(self._targets[what_], matplotlib.axes.Axes):
+                        try:
+                            self.fig.axes.remove(self._targets[what_])
+                            del self._targets[what_]
+                        except ValueError:
+                            pass
+                continue
+            elif isinstance(data, basestring):
+                if what_ in self._targets and isinstance(self._targets[what_], matplotlib.axes.Axes):
+                    try:
+                        self.fig.axes.remove(self._targets[what_])
+                        del self._targets[what_]
+                    except ValueError:
+                        pass
+                if what_ not in self._targets:
+                    align = re.match('(?P<v>bottom|top)(?P<h>left|right)', what_).groupdict()
+                    vpos = float(align['v'] == 'top')
+                    hpos = float(align['h'] == 'right')
+                    self._targets[what_] = self.fig.text(hpos, vpos, 'dummy text', ha=align['h'], va=align['v'])
+                self._targets[what_].set_text(data)
+            elif hasattr(data, '_img'):  # images made by qrcode
+                qr = np.array(data._img.im).reshape(data._img.size) == 0
+                
+                if what_ in self._targets and isinstance(self._targets[what_], matplotlib.text.Text):
+                    try:
+                        self.fig.texts.remove(self._targets[what_])
+                        del self._targets[what_]
+                    except ValueError:
+                        pass
+                if what_ in self._targets and isinstance(self._targets[what_], matplotlib.axes.Axes):
+                    try:
+                        self.fig.axes.remove(self._targets[what_])
+                        del self._targets[what_]
+                    except ValueError:
+                        pass
+                # estimate axes size.
+                align = re.match('(?P<v>bottom|top)(?P<h>left|right)', what_).groupdict()
+                figwidth = self.fig.get_window_extent().width
+                figheight = self.fig.get_window_extent().height
+                img_edgelength = min(figwidth, figheight) / 6
+                if align['h'] == 'right':
+                    hpos = figwidth - img_edgelength
+                    hanchor = 'E'
+                else:
+                    hpos = 0
+                    hanchor = 'W'
+                if align['v'] == 'top':
+                    vpos = figheight - img_edgelength
+                    vanchor = 'N'
+                else:
+                    vpos = 0
+                    vanchor = 'S'
+                
+                axiswidth, axisheight = self.fig.transFigure.inverted().transform_point((img_edgelength, img_edgelength))
+                hpos, vpos = self.fig.transFigure.inverted().transform_point((hpos, vpos))
+                self._targets[what_] = self.fig.add_axes([hpos, vpos, axiswidth, axisheight], aspect=1, anchor=vanchor + hanchor)
+                self._targets[what_].set_axis_off()
+                self._targets[what_].spy(qr)
         if what == 'force' and callable(self.after_draw_cb):
-            self.after_draw_cb(self.exposure, self.fig, plot_axes)
+            self.after_draw_cb(self.exposure, self.fig, self._targets['plot'])
         self.canvas.draw()
-
+        
 class PlotSASImageWindow(Gtk.Dialog):
     __gsignals__ = {'delete-event':'override'}
     _instance_list = []
@@ -278,4 +386,20 @@ class PlotSASImageWindow(Gtk.Dialog):
         return self.plot.get_axes()
     def get_exposure(self):
         return self.plot.get_exposure()
+    def get_bottomleftdata(self):
+        return self.plot.get_bottomleftdata()
+    def get_bottomrightdata(self):
+        return self.plot.get_bottomrightdata()
+    def set_bottomleftdata(self, data):
+        return self.plot.set_bottomleftdata(data)
+    def set_bottomrightdata(self, data):
+        return self.plot.set_bottomrightdata(data)
+    def get_topleftdata(self):
+        return self.plot.get_topleftdata()
+    def get_toprightdata(self):
+        return self.plot.get_toprightdata()
+    def set_topleftdata(self, data):
+        return self.plot.set_topleftdata(data)
+    def set_toprightdata(self, data):
+        return self.plot.set_toprightdata(data)
     
