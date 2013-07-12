@@ -5,6 +5,8 @@ Created on Sep 6, 2012
 '''
 from gi.repository import Gtk
 from gi.repository import GObject
+from gi.repository import Gdk
+from gi.repository import Pango
 import numpy as np
 import os
 from sastool.fitting import FixedParameter, nonlinear_leastsquares
@@ -134,7 +136,7 @@ class Calibrator(Gtk.Dialog):
         elif whattodo == 'delete':
             sel = self.calibview.get_selection()
             model, paths = sel.get_selected_rows()
-            refs = [Gtk.TreeRowReference(model, p) for p in paths]
+            refs = [Gtk.TreeRowReference.new(model, p) for p in paths]
             for r in refs:
                 model.remove(model.get_iter(r.get_path()))
         elif whattodo == 'save':
@@ -274,75 +276,107 @@ class DistCalibrator(CalibratorPolynomial):
     _title = 'Distance calibration'
     _fileextension = '.distcalib'
 
-def qfrompix(pix, pixsize, beampos, alpha, wavelength, dist):
-    pixsizedivdist = pixsize / dist
+def qfrompix(pix, pixelsize, beampos, alpha, wavelength, dist):
+    pixsizedivdist = pixelsize / dist
     catethus_near = 1 + pixsizedivdist * (pix - beampos) * np.cos(alpha)
     catethus_opposite = pixsizedivdist * (pix - beampos) * np.sin(alpha)
     twotheta = np.arctan2(catethus_opposite, catethus_near)
     return 4 * np.pi * np.sin(0.5 * twotheta) / wavelength
 
-def pixfromq(q, pixsize, beampos, alpha, wavelength, dist):
+def pixfromq(q, pixelsize, beampos, alpha, wavelength, dist):
     twotheta = (2 * np.arcsin(q / (4 * np.pi) * wavelength))
-    return dist * np.sin(twotheta) / np.sin(alpha - twotheta) / pixsize + beampos
+    return dist * np.sin(twotheta) / np.sin(alpha - twotheta) / pixelsize + beampos
 
+class EntryNeedingFinalization(Gtk.Entry):
+    __gsignals__ = {'finalized':(GObject.SignalFlags.RUN_FIRST, None, ()),
+                    'activate':'override',
+                    'icon-release':'override',
+                    'editing-done':'override',
+                  }
+    def __init__(self, *args, **kwargs):
+        Gtk.Entry.__init__(self, *args, **kwargs)
+        self.connect('insert-text', lambda obj, newtext, newtextlen, pos:self.mark_changed())
+        self.connect('delete-text', lambda obj, startpos, endpos:self.mark_changed())
+    def do_editing_done(self):
+        self.mark_changed()
+        return
+    def mark_changed(self):
+        self.set_icon_from_stock(Gtk.EntryIconPosition.SECONDARY, Gtk.STOCK_OK)
+        self.set_icon_activatable(Gtk.EntryIconPosition.SECONDARY, True)
+    def do_activate(self):
+        self.finalize()
+        return Gtk.Entry.do_activate(self)
+    def do_icon_release(self, pos, event):
+        if pos == Gtk.EntryIconPosition.SECONDARY:
+            self.finalize()
+    def finalize(self):
+        self.set_icon_from_stock(Gtk.EntryIconPosition.SECONDARY, None)
+        self.emit('finalized')
+    def set_text_finalized(self, newtext):
+        self.set_text(newtext)
+        self.set_icon_from_stock(Gtk.EntryIconPosition.SECONDARY, None)
+    
 class QCalibrator(Calibrator):
     _title = 'Q calibration'
     _fileextension = '.qcalib'
+    dist = GObject.property(type=float, default=216.13)
+    wavelength = GObject.property(type=float, default=1.5418)
+    pixelsize = GObject.property(type=float, default=50e-3)
+    beampos = GObject.property(type=float, default=0)
+    alpha = GObject.property(type=float, default=90)
     def __init__(self, *args, **kwargs):
         Calibrator.__init__(self, *args, **kwargs)
         tab = Gtk.Table()
         self.extended_param_area.pack_start(tab, True, True, 0)
-        self.dist_checkbutton = Gtk.CheckButton('Sample-detector distance:')
-
-        tab.attach(self.dist_checkbutton, 0, 1, 0, 1, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
-        self.dist_entry = Gtk.Entry()
-        tab.attach(self.dist_entry, 1, 2, 0, 1)
-        self.dist_checkbutton.connect('toggled', self.on_checkbutton_toggled, self.dist_entry)
-        self.dist_entry.set_text('216.13')
-
-        self.wavelength_checkbutton = Gtk.CheckButton('Wavelength:')
-        tab.attach(self.wavelength_checkbutton, 0, 1, 1, 2, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
-        self.wavelength_entry = Gtk.Entry()
-        tab.attach(self.wavelength_entry, 1, 2, 1, 2)
-        self.wavelength_checkbutton.connect('toggled', self.on_checkbutton_toggled, self.wavelength_entry)
-        self.wavelength_entry.set_text('1.542')
-
-        self.pixelsize_checkbutton = Gtk.CheckButton('Pixel size:')
-        tab.attach(self.pixelsize_checkbutton, 0, 1, 2, 3, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
-        self.pixelsize_entry = Gtk.Entry()
-        tab.attach(self.pixelsize_entry, 1, 2, 2, 3)
-        self.pixelsize_checkbutton.connect('toggled', self.on_checkbutton_toggled, self.pixelsize_entry)
-        self.pixelsize_entry.set_text('50e-3')
-
-        self.beampos_checkbutton = Gtk.CheckButton('q=0 pixel:')
-        tab.attach(self.beampos_checkbutton, 0, 1, 3, 4, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
-        self.beampos_entry = Gtk.Entry()
-        tab.attach(self.beampos_entry, 1, 2, 3, 4)
-        self.beampos_checkbutton.connect('toggled', self.on_checkbutton_toggled, self.beampos_entry)
-        self.beampos_entry.set_text('0')
-
-        self.alpha_checkbutton = Gtk.CheckButton('Detector angle:')
-        tab.attach(self.alpha_checkbutton, 0, 1, 4, 5, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
-        self.alpha_entry = Gtk.Entry()
-        tab.attach(self.alpha_entry, 1, 2, 4, 5)
-        self.alpha_checkbutton.connect('toggled', self.on_checkbutton_toggled, self.alpha_entry)
-        self.alpha_entry.set_text('90')
+        
+        self.entries = {}
+        self.checkbuttons = {}
+        row = 0
+        for label, propname in [('Sample-detector distance:', 'dist'),
+                                ('Wavelength:', 'wavelength'),
+                                ('Pixel size:', 'pixelsize'),
+                                ('q = 0 pixel:', 'beampos'),
+                                ('Detector angle:', 'alpha')]:
+            self.checkbuttons[propname] = Gtk.CheckButton(label)
+            tab.attach(self.checkbuttons[propname], 0, 1, row, row + 1, Gtk.AttachOptions.FILL)
+            self.entries[propname] = EntryNeedingFinalization()
+            self.entries[propname].connect('finalized', self.on_entry_changed, propname)
+            tab.attach(self.entries[propname], 1, 2, row, row + 1)
+            self.checkbuttons[propname].connect('toggled', self.on_checkbutton_toggled, self.entries[propname])
+            self.connect('notify::' + propname, self.on_prop_changed_notify, self.entries[propname])
+            row += 1
+            self.on_checkbutton_toggled(self.checkbuttons[propname], self.entries[propname])
+        
+        for par in ['dist', 'wavelength', 'pixelsize', 'beampos', 'alpha']:
+            self.notify(par)
 
         b = Gtk.Button('Determine all unchecked')
-        tab.attach(b, 0, 2, 5, 6)
+        tab.attach(b, 0, 2, row, row + 1)
         b.connect('clicked', self.on_fit)
         self.update_extended_params()
         self.extended_param_area.show_all()
+    def on_entry_changed(self, entry, propname):
+        with self.freeze_notify():
+            self.set_property(propname, float(entry.get_text()))
+    def on_prop_changed_notify(self, object, prop, entrywidget):
+        if prop.name == 'alpha':
+            value = self.get_property(prop.name) * 180.0 / np.pi
+        else:
+            value = self.get_property(prop.name)
+        entrywidget.set_text_finalized(str(value))
     def on_checkbutton_toggled(self, checkbutton, corresponding_entry):
-        corresponding_entry.set_sensitive(checkbutton.get_active())
+        if checkbutton.get_sensitive():
+            corresponding_entry.set_sensitive(checkbutton.get_active())
         return True
     def update_extended_params(self):
-        for n in ['alpha', 'dist', 'beampos', 'pixelsize', 'wavelength']:
-            self.on_checkbutton_toggled(getattr(self, n + '_checkbutton'), getattr(self, n + '_entry'))
+        for n in self.checkbuttons:
+            self.on_checkbutton_toggled(self.checkbuttons[n], self.entries[n])
+    def set_fixed(self, propname, fixed=True):
+        self.checkbuttons[propname].set_active(fixed)
     def on_fit(self, button):
         x = self.get_uncal()
         y = self.get_cal()
-        if not (isinstance(self.dist, FixedParameter) or isinstance(self.pixsize, FixedParameter)):
+        if not (isinstance(self.get_dist(), FixedParameter) or isinstance(self.get_pixelsize(), FixedParameter)):
             dlg = Gtk.MessageDialog(self, Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
                                   Gtk.MessageType.ERROR, buttons=Gtk.ButtonsType.CLOSE,
                                   message_format='Either the sample-to-detector distance or the pixel size should be fixed!')
@@ -350,12 +384,12 @@ class QCalibrator(Calibrator):
             dlg.destroy()
             return True
         try:
-            pixsize, beampos, alpha, wavelength, dist, stat = \
-                nonlinear_leastsquares(x, y, None, qfrompix, (self.pixsize,
-                                                              self.beampos,
-                                                              self.alpha,
-                                                              self.wavelength,
-                                                              self.dist))
+            pixelsize, beampos, alpha, wavelength, dist, stat = \
+                nonlinear_leastsquares(x, y, None, qfrompix, (self.get_pixelsize(),
+                                                              self.get_beampos(),
+                                                              self.get_alpha(),
+                                                              self.get_wavelength(),
+                                                              self.get_dist()))
         except TypeError:
             dlg = Gtk.MessageDialog(self, Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
                                   Gtk.MessageType.ERROR, buttons=Gtk.ButtonsType.CLOSE,
@@ -365,8 +399,8 @@ class QCalibrator(Calibrator):
             return True
         if not isinstance(dist, FixedParameter):
             self.dist = dist
-        if not isinstance(pixsize, FixedParameter):
-            self.pixsize = pixsize
+        if not isinstance(pixelsize, FixedParameter):
+            self.pixelsize = pixelsize
         if not isinstance(wavelength, FixedParameter):
             self.wavelength = wavelength
         if not isinstance(beampos, FixedParameter):
@@ -374,82 +408,55 @@ class QCalibrator(Calibrator):
         if not isinstance(alpha, FixedParameter):
             self.alpha = alpha
         return True
+    def _get_myprop(self, name):
+        if self.checkbuttons[name].get_active():
+            return FixedParameter(self.entries[name].get_text())
+        else:
+            return float(self.entries[name].get_text())
     def get_alpha(self):
-        a = float(self.alpha_entry.get_text()) * np.pi / 180.0
-        if self.alpha_checkbutton.get_active():
-            return FixedParameter(a)
-        else:
-            return float(a)
+        a = self._get_myprop('alpha')
+        return a.__class__(a * np.pi / 180.0)
     def set_alpha(self, value):
-        self.alpha_entry.set_text('%.2f' % (value * 180.0 / np.pi))
+        self.alpha = value
     def get_beampos(self):
-        a = self.beampos_entry.get_text()
-        if self.beampos_checkbutton.get_active():
-            return FixedParameter(a)
-        else:
-            return float(a)
+        return self._get_myprop('beampos')
     def set_beampos(self, value):
-        self.beampos_entry.set_text('%g' % value)
+        self.beampos = value
     def get_dist(self):
-        a = self.dist_entry.get_text()
-        if self.dist_checkbutton.get_active():
-            return FixedParameter(a)
-        else:
-            return float(a)
+        return self._get_myprop('dist')
     def set_dist(self, value):
-        self.dist_entry.set_text('%g' % value)
-    def get_pixsize(self):
-        a = self.pixelsize_entry.get_text()
-        if self.pixelsize_checkbutton.get_active():
-            return FixedParameter(a)
-        else:
-            return float(a)
-    def set_pixsize(self, value):
-        self.pixelsize_entry.set_text('%g' % value)
+        self.dist = value
+    def get_pixelsize(self):
+        return self._get_myprop('pixelsize')
+    def set_pixelsize(self, value):
+        self.pixelsize = value
     def get_wavelength(self):
-        a = self.wavelength_entry.get_text()
-        if self.wavelength_checkbutton.get_active():
-            return FixedParameter(a)
-        else:
-            return float(a)
+        return self._get_myprop('wavelength')
     def set_wavelength(self, value):
-        self.wavelength_entry.set_text('%g' % value)
-    alpha = property(get_alpha, set_alpha)
-    beampos = property(get_beampos, set_beampos)
-    dist = property(get_dist, set_dist)
-    pixsize = property(get_pixsize, set_pixsize)
-    wavelength = property(get_wavelength, set_wavelength)
+        self.wavelength = value
     def calibrate(self, value):
         self.on_fit(None)
-        return qfrompix(value, self.pixsize, self.beampos, self.alpha,
+        return qfrompix(value, self.pixelsize, self.beampos, self.alpha,
                         self.wavelength, self.dist)
     def uncalibrate(self, value):
         self.on_fit(None)
-        return pixfromq(value, self.pixsize, self.beampos, self.alpha,
+        return pixfromq(value, self.pixelsize, self.beampos, self.alpha,
                         self.wavelength, self.dist)
     def write_header(self, f):
         Calibrator.write_header(self, f)
         f.write('#Q calibration\n')
-        f.write('#alpha: %g; %d\n' % (self.alpha, self.alpha_checkbutton.get_active()))
-        f.write('#beampos: %g; %d\n' % (self.beampos, self.beampos_checkbutton.get_active()))
-        f.write('#dist: %g; %d\n' % (self.dist, self.dist_checkbutton.get_active()))
-        f.write('#pixsize: %g; %d\n' % (self.pixsize, self.pixelsize_checkbutton.get_active()))
-        f.write('#wavelength: %g; %d\n' % (self.wavelength, self.wavelength_checkbutton.get_active()))
+        for prop in sorted(self.checkbuttons):
+            f.write('#%s: %g; %d\n' % (prop, self.get_property(prop), self.checkbuttons[prop].get_active()))
     def read_from_header(self, line):
         line = line.strip()
         print line
-        for name, cb in zip(['alpha', 'beampos', 'dist', 'pixsize', 'wavelength'],
-                            [self.alpha_checkbutton, self.beampos_checkbutton,
-                             self.dist_checkbutton, self.pixelsize_checkbutton,
-                             self.wavelength_checkbutton]):
-            if line.startswith('#' + name):
+        for name in sorted(self.checkbuttons):
+            if line.startswith('#' + name + ': '):
                 t = line.split(':', 1)[1]
-                print name + ' found'
                 try:
-                    setattr(self, name, float(t.split(';')[0]))
+                    self.set_property(name, float(t.split(';')[0]))
                     val = bool(int(t.split(';')[1]))
-                    print name, val
-                    cb.set_active(val)
+                    self.checkbuttons[name].set_active(val)
                 except:
                     raise
                 return True
