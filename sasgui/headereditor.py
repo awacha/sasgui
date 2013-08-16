@@ -83,3 +83,25 @@ class HeaderEditor(Gtk.VBox):
     def append_column(self, hecolumn):
         liststore1 = Gtk.ListStore(*([self.liststore.get_column_type(i) for i in range(self.liststore.get_n_columns())] + [hecolumn.coltype]))
         
+class HeaderListColumn(GObject.GObject):
+    __gtype_name__ = 'SASGUI_HeaderListColumn'
+    type_ = GObject.property(type=GObject.TYPE_GTYPE, default=GObject.TYPE_STRING)
+    minimum = GObject.property(type=GObject.TYPE_FLOAT, default=float('-inf'))
+    maximum = GObject.property(type=GObject.TYPE_FLOAT, default=float('inf'))
+    default = GObject.property(type=GObject.TYPE_PYOBJECT)
+    fieldname = GObject.property(type=GObject.TYPE_STRING)
+    mnemonic = GObject.property(type=GObject.TYPE_STRING)
+    def __init__(self, **kwargs):
+        GObject.GObject.__init__(self)
+        for k in kwargs:
+            self.set_property(k, kwargs[k])
+            
+
+class HeaderListView(Gtk.TreeView):
+    __gtype_name__ = 'SASGUI_HeaderListView'
+    _default_fields = ['FSN', 'Title', 'DistCalibrated', 'EnergyCalibrated', 'MeasTime', 'Temperature']
+    def __init__(self):
+        self._model = Gtk.ListStore(GObject.TYPE_PYOBJECT)
+        Gtk.TreeView.__init__(self._model)
+    
+        pass

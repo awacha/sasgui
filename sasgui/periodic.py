@@ -5,6 +5,7 @@ from gi.repository import GObject
 __all__ = ['Periodic', 'PeriodicButton']
 
 class Periodic(Gtk.Table):
+    __gtype_name__ = 'SASGUI_Periodic'
     __gsignals__ = {'select-element':(GObject.SignalFlags.RUN_FIRST, None, (str, int)),
                   }
     table_list = "H\tHe\nLiBe\tBCNOFNe\nNaMg\tAlSiPSClAr\nKCa\tScTiVCrMnFeCoNiCuZnGaGeAsSeBrKr\nRbSr\tYZrNbMoTcRuRhPdAgCdInSnSbTeIXe\nCsBa(LaCePrNdPmSmEuGdTbDyHoErTmYbLu)HfTaWReOsIrPtAuHgTlPbBiPoAtRn\nFrRa(AcThPaUNpPuAmCmBkCfEsFmMdNoLr)RfHaSgBhHsMt"
@@ -65,6 +66,7 @@ class Periodic(Gtk.Table):
         return self.emit('select-element', element, atnumber)
     
 class PeriodicButton(Gtk.Button):
+    __gtype_name__ = 'SASGUI_PeriodicButton'
     __gsignals__ = {'select-element':(GObject.SignalFlags.RUN_FIRST, None, (str, int)),
                   }
     def __init__(self, element='Cu'):

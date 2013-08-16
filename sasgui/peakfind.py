@@ -8,6 +8,7 @@ import numpy as np
 __all__ = ['PeakFind', 'PeakFindDialog']
 
 class PeakFind(Gtk.Paned):
+    __gtype_name__ = 'SASGUI_PeakFind'
     def __init__(self):
         Gtk.Paned.__init__(self, orientation=Gtk.Orientation.HORIZONTAL)
         self.xdata = None
@@ -275,6 +276,7 @@ class PeakFind(Gtk.Paned):
         self.redraw_curves()
         
 class PeakFindDialog(Gtk.Dialog):
+    __gtype_name__ = 'SASGUI_PeakFindDialog'
     def __init__(self, title='Find peaks...', parent=None, flags=Gtk.DialogFlags.DESTROY_WITH_PARENT, buttons=(Gtk.STOCK_OK, Gtk.ResponseType.OK)):
         Gtk.Dialog.__init__(self, title, parent, flags, buttons)
         ca = self.get_content_area()

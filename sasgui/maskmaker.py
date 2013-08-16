@@ -44,6 +44,7 @@ for f, n in [('circle.png', 'Select a circle'),
 iconfactory.add_default()
 
 class HistogramSelector(Gtk.Dialog):
+    __gtype_name__ = 'SASGUI_HistogramSelector'
     def __init__(self, data, *args, **kwargs):
         Gtk.Dialog.__init__(self, *args, **kwargs)
         self.set_default_response(Gtk.ResponseType.CANCEL)
@@ -100,6 +101,7 @@ class HistogramSelector(Gtk.Dialog):
 
 
 class MaskMaker(Gtk.Dialog):
+    __gtype_name__ = 'SASGUI_MaskMaker'
     _mouseclick_mode = None  # Allowed: 'Points', 'Lines', 'PixelHunt' and None
     _mouseclicks = []
     _selection = None

@@ -22,6 +22,7 @@ default_palette = 'jet'
 __all__ = ['PlotSASImage', 'PlotSASImageWindow']
 
 class PlotSASImage(Gtk.VBox):
+    __gtype_name__='SASGUI_PlotSASImage'
     _exposure = None
     __gsignals__ = {'delete-event':'override'}
     _bottomrightdata = None
@@ -351,6 +352,7 @@ class PlotSASImage(Gtk.VBox):
         self.canvas.draw()
         
 class PlotSASImageWindow(Gtk.Dialog):
+    __gtype_name__='SASGUI_PlotSASImageWindow'
     __gsignals__ = {'delete-event':'override'}
     _instance_list = []
     def __init__(self, exposure=None, title='Image', parent=None, flags=Gtk.DialogFlags.DESTROY_WITH_PARENT, buttons=(), after_draw_cb=None):
@@ -402,4 +404,4 @@ class PlotSASImageWindow(Gtk.Dialog):
         return self.plot.set_topleftdata(data)
     def set_toprightdata(self, data):
         return self.plot.set_toprightdata(data)
-    
+

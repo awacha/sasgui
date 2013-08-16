@@ -11,6 +11,7 @@ __all__ = ['PlotSASCurve', 'PlotSASCurveWindow']
 
 
 class PlotSASCurve(Gtk.Box):
+    __gtype_name__='SASGUI_PlotSASCurve'
     def __init__(self, orientation=Gtk.Orientation.HORIZONTAL):
         Gtk.Box.__init__(self, orientation=orientation)
         ex = Gtk.Expander(label='Fitting...')
@@ -224,6 +225,7 @@ class PlotSASCurve(Gtk.Box):
         return self.gca().axis(*args, **kwargs)
     
 class PlotSASCurveWindow(Gtk.Dialog):
+    __gtype_name__='SASGUI_PlotSASCurveWindow'
     __gsignals__ = {'delete-event':'override'}
     _instance_list = []
     def __init__(self, title='Curve', parent=None, flags=Gtk.DialogFlags.DESTROY_WITH_PARENT, buttons=()):
@@ -274,8 +276,8 @@ class PlotSASCurveWindow(Gtk.Dialog):
     def title(self, *args, **kwargs):
         return self.plotsascurve.title(*args, **kwargs)
     def xlabel(self, *args, **kwargs):
-        return self.plotsascurve.set_xlabel(*args, **kwargs)
+        return self.plotsascurve.xlabel(*args, **kwargs)
     def ylabel(self, *args, **kwargs):
-        return self.plotsascurve.set_ylabel(*args, **kwargs)
+        return self.plotsascurve.ylabel(*args, **kwargs)
     def axis(self, *args, **kwargs):
         return self.plotsascurve.axis(*args, **kwargs)

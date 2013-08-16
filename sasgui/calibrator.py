@@ -20,6 +20,7 @@ class Calibrator(Gtk.Dialog):
     '''
     A specialized Gtk.Dialog for configuring interpolation-like calibration.
     '''
+    __gtype_name__ = 'SASGUI_Calibrator'
     _xcolumnname = 'Uncalibrated'
     _ycolumnname = 'Calibrated'
     _title = 'Calibration'
@@ -228,6 +229,7 @@ class Calibrator(Gtk.Dialog):
         return False
 
 class CalibratorPolynomial(Calibrator):
+    __gtype_name__ = 'SASGUI_CalibratorPolynomial'
     def __init__(self, *args, **kwargs):
         Calibrator.__init__(self, *args, **kwargs)
         hbox = Gtk.HBox()
@@ -269,10 +271,12 @@ class CalibratorPolynomial(Calibrator):
 
 
 class EnergyCalibrator(CalibratorPolynomial):
+    __gtype_name__ = 'SASGUI_EnergyCalibrator'
     _title = 'Energy calibration'
     _fileextension = '.energycalib'
 
 class DistCalibrator(CalibratorPolynomial):
+    __gtype_name__ = 'SASGUI_DistCalibrator'
     _title = 'Distance calibration'
     _fileextension = '.distcalib'
 
@@ -288,6 +292,7 @@ def pixfromq(q, pixelsize, beampos, alpha, wavelength, dist):
     return dist * np.sin(twotheta) / np.sin(alpha - twotheta) / pixelsize + beampos
 
 class EntryNeedingFinalization(Gtk.Entry):
+    __gtype_name__ = 'SASGUI_EntryNeedingFinalization'
     __gsignals__ = {'finalized':(GObject.SignalFlags.RUN_FIRST, None, ()),
                     'activate':'override',
                     'icon-release':'override',
@@ -298,7 +303,8 @@ class EntryNeedingFinalization(Gtk.Entry):
         self.connect('insert-text', lambda obj, newtext, newtextlen, pos:self.mark_changed())
         self.connect('delete-text', lambda obj, startpos, endpos:self.mark_changed())
     def do_editing_done(self):
-        self.mark_changed()
+        self.set_icon_from_stock(Gtk.EntryIconPosition.SECONDARY, Gtk.STOCK_OK)
+        self.set_icon_activatable(Gtk.EntryIconPosition.SECONDARY, True)
         return
     def mark_changed(self):
         self.set_icon_from_stock(Gtk.EntryIconPosition.SECONDARY, Gtk.STOCK_OK)
@@ -317,6 +323,7 @@ class EntryNeedingFinalization(Gtk.Entry):
         self.set_icon_from_stock(Gtk.EntryIconPosition.SECONDARY, None)
     
 class QCalibrator(Calibrator):
+    __gtype_name__ = 'SASGUI_QCalibrator'
     _title = 'Q calibration'
     _fileextension = '.qcalib'
     dist = GObject.property(type=float, default=216.13)

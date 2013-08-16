@@ -13,6 +13,7 @@ from sastool import misc
 __all__ = ['PathEditor', 'pathedit']
 
 class PathEditor(Gtk.Dialog):
+    __gtype_name__ = 'SASGUI_PathEditor'
     def __init__(self, parent=None, pathlist=None):
         if parent is not None:
             parent = parent.get_toplevel()

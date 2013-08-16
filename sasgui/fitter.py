@@ -17,6 +17,7 @@ import traceback
 __all__ = ['Fitter', 'FitParam', 'FitParamList']
 
 class Fitter(Gtk.Notebook):
+    __gtype_name__ = 'SASGUI_Fitter'
     __gsignals__ = {'fitting-done':(GObject.SignalFlags.RUN_FIRST, None, (object,)),
                   }
     
@@ -319,6 +320,7 @@ class Fitter(Gtk.Notebook):
         return self.fitfunctionlist.load_functions(*args, **kwargs)
     
 class FitterDialog(Gtk.Dialog):
+    __gtype_name__ = 'SASGUI_FitterDialog'
     def __init__(self, title='Fitting...', parent=None,
                  flags=Gtk.DialogFlags.DESTROY_WITH_PARENT,
                  buttons=(Gtk.STOCK_CLOSE, Gtk.ResponseType.CLOSE),
@@ -331,6 +333,7 @@ class FitterDialog(Gtk.Dialog):
         return self.fitter.load_functions(*args, **kwargs)
 
 class DataRangeSelector(Gtk.VBox):
+    __gtype_name__ = 'SASGUIE_DataRangeSelector'
     def __init__(self):
         Gtk.VBox.__init__(self)
         self.axes = None
@@ -392,6 +395,7 @@ class DataRangeSelector(Gtk.VBox):
             return np.inf
         
 class LineSelector(Gtk.ScrolledWindow):
+    __gtype_name__ = 'SASGUI_LineSelector'
     __gsignals__ = {'line-selected':(GObject.SignalFlags.RUN_FIRST, None, (object,)),
                   }
     def __init__(self):
@@ -524,6 +528,7 @@ class FitFunction(object):
         return lis
     
 class FitFunctionList(Gtk.VBox):
+    __gtype_name__ = 'SASGUIE_FitFunctionList'
     __gsignals__ = {'func-changed':(GObject.SignalFlags.RUN_FIRST, None, (object,)), }
     def __init__(self):
         Gtk.VBox.__init__(self)
@@ -572,6 +577,7 @@ class FitParam(object):
             self.value = ErrorValue(value, error)
 
 class FitParamList(Gtk.ScrolledWindow):
+    __gtype_name__ = 'SASGUI_FitParamList'
     __gsignals__ = {'params-changed':(GObject.SignalFlags.RUN_FIRST, None, ()),
                   }
     
