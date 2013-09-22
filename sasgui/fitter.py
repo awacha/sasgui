@@ -195,7 +195,7 @@ class Fitter(Gtk.Notebook):
                     dialog.set_title('User break')
                 else:
                     dialog = Gtk.MessageDialog(None, Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR, Gtk.ButtonsType.OK,
-                                               str(ex.message))
+                                               str(ex))
                     # dialog.format_secondary_text('Traceback:')
                     msgarea = dialog.get_message_area()
                     expander = Gtk.Expander(label='Traceback')

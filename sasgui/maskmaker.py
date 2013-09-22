@@ -414,7 +414,7 @@ class MaskMaker(Gtk.Dialog):
                 self.mask.write_to_sma(filename)
             else:
                 np.savez_compressed(filename + '.npz', **fdict)  # IGNORE:W0142
-        os.chdir(fcd.get_current_folder())
+        # os.chdir(fcd.get_current_folder())
         fcd.destroy()
     def loadmask(self, widget=None):  # IGNORE:W0613
         fcd = Gtk.FileChooserDialog('Select file to load mask...', self,
