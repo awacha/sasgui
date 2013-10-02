@@ -22,7 +22,7 @@ default_palette = 'jet'
 __all__ = ['PlotSASImage', 'PlotSASImageWindow']
 
 class PlotSASImage(Gtk.VBox):
-    __gtype_name__='SASGUI_PlotSASImage'
+    __gtype_name__ = 'SASGUI_PlotSASImage'
     _exposure = None
     __gsignals__ = {'delete-event':'override'}
     _bottomrightdata = None
@@ -41,9 +41,9 @@ class PlotSASImage(Gtk.VBox):
         tab.attach(l, 0, 1, 0, 1, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
         self.palette_combo = Gtk.ComboBoxText()
         tab.attach(self.palette_combo, 1, 2, 0, 1)
-        self.palette_combo.connect('changed', self.draw_image, 'force')
         [self.palette_combo.append_text(m) for m in dir(matplotlib.cm) if eval('isinstance(matplotlib.cm.%s,matplotlib.colors.Colormap)' % m) and not m.endswith('_r')]
         self.palette_combo.set_active([i for i, l in itertools.izip(itertools.count(0), self.palette_combo.get_model()) if l[0] == default_palette][0])
+        self.palette_combo.connect('changed', self.draw_image, 'force')
 
         l = Gtk.Label(label='Color scale:')
         l.set_alignment(0, 0.5)
@@ -80,15 +80,21 @@ class PlotSASImage(Gtk.VBox):
 
         self.plotmask_checkbutton = Gtk.CheckButton('Plot mask')
         hb.pack_start(self.plotmask_checkbutton, True, True, 0)
+        self.plotmask_checkbutton.set_active(True)
         self.plotmask_checkbutton.connect('toggled', self.draw_image, 'plotmask')
 
         self.beampos_checkbutton = Gtk.CheckButton('Beam position')
         hb.pack_start(self.beampos_checkbutton, True, True, 0)
+        self.beampos_checkbutton.set_active(True)
         self.beampos_checkbutton.connect('toggled', self.draw_image, 'beampos')
 
         self.colorbar_checkbutton = Gtk.CheckButton('Color bar')
         hb.pack_start(self.colorbar_checkbutton, True, True, 0)
+        self.colorbar_checkbutton.set_active(True)
         self.colorbar_checkbutton.connect('toggled', self.draw_image, 'colorbar')
+        
+        self.preservezoom_checkbutton = Gtk.CheckButton('Preserve zoom')
+        hb.pack_start(self.preservezoom_checkbutton, True, True, 0)
 
         self.fig = Figure(figsize=(3.75, 2.5), dpi=80)
         self.canvas = FigureCanvasGTK3Agg(self.fig)
@@ -136,8 +142,8 @@ class PlotSASImage(Gtk.VBox):
             del self._exposure
         self._exposure = exposure
         if isinstance(exposure, SASExposure):
-            self.plotmask_checkbutton.set_active(exposure.check_for_mask(False))
-            self.beampos_checkbutton.set_active(('BeamPosX' in exposure.header) and ('BeamPosY' in exposure.header))
+            self.plotmask_checkbutton.set_sensitive(exposure.check_for_mask(False))
+            self.beampos_checkbutton.set_sensitive(('BeamPosX' in exposure.header) and ('BeamPosY' in exposure.header))
         self.update_properties_tools()
         self.draw_image(what='uberforce')
     def update_properties_tools(self):
@@ -163,7 +169,7 @@ class PlotSASImage(Gtk.VBox):
             self.on_clipcheckbutton_toggled(self.highclip_checkbutton, self.highclip_entry)
             self.colorbar_checkbutton.set_sensitive(True)
             self.plotmask_checkbutton.set_sensitive(isinstance(self.exposure.mask, SASMask))
-            if not isinstance(self.exposure.mask, SASMask):
+            if not isinstance(self.exposure.mask, SASMask) and self.plotmask_checkbutton.get_active():
                 self.plotmask_checkbutton.set_active(False)
             if ('BeamPosX' in self.exposure.header) and ('BeamPosY' in self.exposure.header):
                 self.beampos_checkbutton.set_sensitive(True)
@@ -211,8 +217,18 @@ class PlotSASImage(Gtk.VBox):
         self._targets = {}
         self.canvas.draw()
     def draw_image(self, widget=None, what='uberforce'):
+        """Redraw the image. Working depends on the value of 'what':
+        
+        'clear': just clears the graph
+        'force': 
+        'uberforce': the same as 'force' but clears the graph before.
+        """
         if what == 'clear':
             return self.clear()
+        if self.preservezoom_checkbutton.get_active() and 'plot' in self._targets:
+            zoombefore = self._targets['plot'].axis()
+        else:
+            zoombefore = None
         if what == 'uberforce':
             self.clear()
             what = 'force'
@@ -265,6 +281,8 @@ class PlotSASImage(Gtk.VBox):
                                         drawmask=self.plotmask_checkbutton.get_active() and (what == 'force' or what == 'plotmask'),
                                         qrange_on_axis=self.qorpixel_toggle.get_active(),
                                         )
+        if self.preservezoom_checkbutton.get_active() and (zoombefore is not None):
+            self._targets['plot'].axis(zoombefore) 
         axes_after_plot = self.fig.get_children()
         if draw_colorbar is True:
             # the colorbar axes was created by the SASExposure.plot2d() call. It should be the only new axes.
@@ -352,7 +370,7 @@ class PlotSASImage(Gtk.VBox):
         self.canvas.draw()
         
 class PlotSASImageWindow(Gtk.Dialog):
-    __gtype_name__='SASGUI_PlotSASImageWindow'
+    __gtype_name__ = 'SASGUI_PlotSASImageWindow'
     __gsignals__ = {'delete-event':'override'}
     _instance_list = []
     def __init__(self, exposure=None, title='Image', parent=None, flags=Gtk.DialogFlags.DESTROY_WITH_PARENT, buttons=(), after_draw_cb=None):
@@ -382,7 +400,7 @@ class PlotSASImageWindow(Gtk.Dialog):
         return [x for x in cls._instance_list if x._lastfocustime == maxfocustime][0]
     def set_exposure(self, exposure):
         self.plot.set_exposure(exposure)
-        if exposure is not None:
+        if (exposure is not None) and hasattr(exposure, 'header'):
             self.set_title(unicode(exposure.header))
     def get_axes(self):
         return self.plot.get_axes()
