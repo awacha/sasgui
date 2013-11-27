@@ -1,6 +1,4 @@
 from gi.repository import Gtk
-from gi.repository import GObject
-from .fitter import Fitter
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg
 from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3
@@ -135,7 +133,7 @@ class PlotSASCurve(Gtk.Box):
             self.gca().set_xscale('power', exponent=2)
             self.gca().set_yscale('log')
         else:
-            raise NotImplementedError
+            raise NotImplementedError("*" + str(combo.get_active_text()) + "*")
         self.draw()
         return False
     

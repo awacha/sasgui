@@ -8,14 +8,9 @@ from .plot2dsasimage import PlotSASImage
 
 from gi.repository import Gtk
 import re
-import matplotlib
-import pkg_resources
 from gi.repository import GObject
-from gi.repository import GdkPixbuf
 
-import uuid
 import numpy as np
-import matplotlib.nxutils
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg
 from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3
 from matplotlib.figure import Figure
@@ -23,25 +18,9 @@ import os
 import scipy.io
 
 from sastool.classes import SASExposure, SASMask
-from sastool import misc
 
 __all__ = ['MaskMaker', 'makemask']
 
-iconfactory = Gtk.IconFactory()
-for f, n in [('circle.png', 'Select a circle'),
-          ('histogram_masked.png', 'Select from intensity histogram (only masked pixels'),
-          ('histogram.png', 'Select from histogram'),
-          ('infandnan.png', 'Select nonfinite pixels'),
-          ('invert_mask.png', 'Invert mask'),
-          ('pixelhunt.png', 'Pixel hunting'),
-          ('polygon.png', 'Select polygon'),
-          ('rectangle.png', 'Select rectangle'),
-          ('nonpositive.png', 'Select non-positive pixels')]:
-    basename = os.path.splitext(f)[0]
-    iconset = Gtk.IconSet(GdkPixbuf.Pixbuf.new_from_file(pkg_resources.resource_filename('sasgui', 'resource/icons/%s' % f)))
-    # Gtk.stock_add([('sasgui_%s' % basename, n, 0, 0, 'C')])
-    iconfactory.add('sasgui_%s' % basename, iconset)
-iconfactory.add_default()
 
 class HistogramSelector(Gtk.Dialog):
     __gtype_name__ = 'SASGUI_HistogramSelector'
@@ -150,11 +129,11 @@ class MaskMaker(Gtk.Dialog):
 
 
         self.fig = PlotSASImage()
-        self.fig.exposure = self.exposure
+        self.fig.set_exposure(self.exposure)
         self.fig.set_size_request(640, 480)
         vbox.pack_start(self.fig, True, True, 0)
-        self.graphtoolbar = self.fig.figure_toolbar
-        self.fig.canvas.mpl_connect('button_press_event', self._on_matplotlib_mouseclick)
+        self.graphtoolbar = self.fig._figure_toolbar
+        self.fig._canvas.mpl_connect('button_press_event', self._on_matplotlib_mouseclick)
 
         # self.pixelhunt_button = Gtk.ToggleToolButton(icon_widget=Gtk.Image.new_from_icon_name('sasgui_pixelhunt', self.toolbar.get_icon_size()), label=iconlabels['sasgui_pixelhunt'])
         self.pixelhunt_button = Gtk.ToggleToolButton(stock_id='sasgui_pixelhunt')
@@ -362,12 +341,10 @@ class MaskMaker(Gtk.Dialog):
         if purifyonly:
             return True
         if justthemask:
-            self.fig.draw_image(what='plotmask')
+            self.fig.redraw_mask()
+            self.fig._canvas.draw()
             return True
-        if redraw:
-            self.fig.draw_image(what='uberforce')
-        else:
-            self.fig.draw_image(what='force')
+        self.fig.redraw_image()
         return True
     def newmask(self, widget=None):  # IGNORE:W0613
         self.mask = np.ones_like(self.matrix)
@@ -466,19 +443,19 @@ class MaskMaker(Gtk.Dialog):
             return False
         if event.button == 1:
             if self._mouseclick_mode.upper() == 'POINTS':
-                ax = self.fig.gca().axis()
-                self.addline(self.fig.gca().plot(event.xdata, event.ydata, 'o', c='white', markersize=7))
-                self.fig.gca().axis(ax)
-                self.fig.canvas.draw()
+                ax = self.fig.get_zoom()
+                self.addline(self.fig.get_axes().plot(event.xdata, event.ydata, 'o', c='white', markersize=7))
+                self.fig.zoom(ax)
+                self.fig._canvas.draw()
             if self._mouseclick_mode.upper() == 'LINES':
-                ax = self.fig.gca().axis()
-                self.addline(self.fig.gca().plot(event.xdata, event.ydata, 'o', c='white', markersize=7))
+                ax = self.fig.get_zoom()
+                self.addline(self.fig.get_axes().plot(event.xdata, event.ydata, 'o', c='white', markersize=7))
                 if self._mouseclicks:
-                    self.addline(self.fig.gca().plot([self._mouseclicks[-1][0], event.xdata],
+                    self.addline(self.fig.get_axes().plot([self._mouseclicks[-1][0], event.xdata],
                                         [self._mouseclicks[-1][1], event.ydata],
                                         c='white'))
-                self.fig.gca().axis(ax)
-                self.fig.canvas.draw()
+                self.fig.zoom(ax)
+                self.fig._canvas.draw()
             if self._mouseclick_mode.upper() == 'PIXELHUNT':
                 if (event.xdata >= 0 and event.xdata < self.mask.shape[1] and
                     event.ydata >= 0 and event.ydata < self.mask.shape[0]):

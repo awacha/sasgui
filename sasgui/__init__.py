@@ -1,7 +1,28 @@
 from gi.repository import Gtk
 from gi.repository import GObject
+from gi.repository import GdkPixbuf
+import os
+import pkg_resources
 import matplotlib
 matplotlib.use('GTK3Agg')
+
+iconfactory = Gtk.IconFactory()
+for f, n in [('circle.png', 'Select a circle'),
+          ('histogram_masked.png', 'Select from intensity histogram (only masked pixels'),
+          ('histogram.png', 'Select from histogram'),
+          ('infandnan.png', 'Select nonfinite pixels'),
+          ('invert_mask.png', 'Invert mask'),
+          ('pixelhunt.png', 'Pixel hunting'),
+          ('polygon.png', 'Select polygon'),
+          ('rectangle.png', 'Select rectangle'),
+          ('nonpositive.png', 'Select non-positive pixels'),
+          ('piechart.png', 'Open statistics window')]:
+    basename = os.path.splitext(f)[0]
+    iconset = Gtk.IconSet(GdkPixbuf.Pixbuf.new_from_file(pkg_resources.resource_filename('sasgui', 'resource/icons/%s' % f)))
+    # Gtk.stock_add([('sasgui_%s' % basename, n, 0, 0, 'C')])
+    iconfactory.add('sasgui_%s' % basename, iconset)
+iconfactory.add_default()
+
 
 import sasimagegui
 import maskmaker
