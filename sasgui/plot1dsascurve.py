@@ -8,6 +8,7 @@ import sastool
 import time
 import numpy as np
 __all__ = ['PlotSASCurve', 'PlotSASCurveWindow']
+import libconfig
 
 COLORS = 'bgrcmyk'
 MARKERS = ['', '.', ',', 'o', 'v', 's', '*', '+', 'D', '^', 'x']
@@ -49,7 +50,7 @@ class PlotSASCurve(Gtk.Box):
         l = Gtk.Label(label='X axis title:'); l.set_alignment(0, 0.5)
         grid.attach(l, 2 * col, row, 1, 1)
         self._xtitle_entry = Gtk.ComboBoxText.new_with_entry()
-        self._xtitle_entry.append_text(u'q (1/\xc5)'.encode('utf-8'))
+        self._xtitle_entry.append_text(u'q ('+libconfig.qunit()+')'.encode('utf-8'))
         self._xtitle_entry.append_text('Pixel')
         self._xtitle_entry.connect('editing-done', lambda cb:self.set_xlabel(cb.get_active_text().decode('utf-8')))
         self._xtitle_entry.connect('changed', lambda cb:self.set_xlabel(cb.get_active_text().decode('utf-8')))

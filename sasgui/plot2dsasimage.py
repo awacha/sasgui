@@ -335,15 +335,18 @@ class PlotSASImage(Gtk.Box):
             self._maskimg = self._imgaxis.imshow(maskimage, alpha=self.mask_alpha, origin='upper', interpolation='nearest', extent=self._img.get_extent())
 
     def redraw_qr(self):
-        if (not self.show_qr) or (not isinstance(self._exposure, sastool.SASExposure)):
+        self._qraxis.clear()
+        try:
+            if (not self.show_qr) or (not isinstance(self._exposure, sastool.SASExposure)):
+                raise KeyError
+            self._qraxis.set_axis_off()
+            self._qraxis.set_visible(True)
+            qr = qrcode.make(self._exposure['Owner'] + '@CREDO://' + str(self._exposure.header) + ' ' + str(self._exposure['Date']), box_size=10)
+            self._qraxis.spy(np.array(qr._img.im).reshape(qr._img.size) == 0)
+        except KeyError:
             self._qraxis.clear()
             self._qraxis.set_visible(False)
             return
-        self._qraxis.clear()
-        self._qraxis.set_axis_off()
-        self._qraxis.set_visible(True)
-        qr = qrcode.make(self._exposure['Owner'] + '@CREDO://' + str(self._exposure.header) + ' ' + str(self._exposure['Date']), box_size=10)
-        self._qraxis.spy(np.array(qr._img.im).reshape(qr._img.size) == 0)
         self._canvas.draw()
     
     def redraw_logo(self):
@@ -438,7 +441,7 @@ class PlotSASImageWindow(Gtk.Window):
         return self._plot.get_zoom()
 
 class SASImageStatisticsWindow(Gtk.Window):
-    _stats = [('npix', 'Number of pixels'), ('mean', 'Mean'), ('std', 'Std.Dev.'), ('median', 'Median'), ('min', 'Minimum'), ('max', 'Maximum')]
+    _stats = [('npix', 'Number of pixels'), ('mean', 'Mean'), ('std', 'Std.Dev.'), ('median', 'Median'), ('min', 'Minimum'), ('max', 'Maximum'), ('sum', 'Sum')]
     def __init__(self):
         Gtk.Window.__init__(self, Gtk.WindowType.TOPLEVEL)
         vb = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -482,6 +485,8 @@ class SASImageStatisticsWindow(Gtk.Window):
                     row[2] = str(float(exposure.max(masked=self._maskedcb.get_active())))
                 elif row[0] == 'median':
                     row[2] = str(float(exposure.median(masked=self._maskedcb.get_active())))
+                elif row[0] == 'sum':
+                    row[2] = str(float(exposure.sum(masked=self._maskedcb.get_active())))
         else:
             for row in self._statlist:
                 if row[0] == 'mean':
@@ -496,5 +501,7 @@ class SASImageStatisticsWindow(Gtk.Window):
                     row[2] = str(np.max(exposure))
                 elif row[0] == 'median':
                     row[2] = str(np.median(exposure))
+                elif row[0] == 'sum':
+                    row[2] = str(np.sum(exposure))
         self._lastexposure = exposure
         return

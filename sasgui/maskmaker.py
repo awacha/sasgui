@@ -170,7 +170,7 @@ class MaskMaker(Gtk.Dialog):
         self.toolbar.insert(self.undobutton, -1)
         self.undobutton.connect('clicked', self.on_button_clicked, 'Undo')
         self.undobutton.set_sensitive(False)
-        
+
         self.get_content_area().show_all()
         self.update_graph()
     def backup_mask(self):
@@ -283,7 +283,7 @@ class MaskMaker(Gtk.Dialog):
                     self._mouseclick_mode = None
                     self.backup_mask()
                     self.mask.edit_circle(self._mouseclicks[0][1], self._mouseclicks[0][0],
-                                          np.sqrt((self._mouseclicks[1][0] - self._mouseclicks[0][0]) ** 2 + 
+                                          np.sqrt((self._mouseclicks[1][0] - self._mouseclicks[0][0]) ** 2 +
                                                   (self._mouseclicks[1][1] - self._mouseclicks[0][1]) ** 2),
                                           whattodo=self.get_maskingmode())
                     self.update_graph(justthemask=True)
@@ -434,7 +434,7 @@ class MaskMaker(Gtk.Dialog):
                     if re.match('mask([.]*).mat', os.path.split(filename)[-1]):
                         self.maskid = os.path.split(filename)[-1][:-4]
                     self.zap_backups()
-        os.chdir(fcd.get_current_folder())
+        #os.chdir(fcd.get_current_folder())
         fcd.destroy()
         self.update_graph(justthemask=True)
         return True

@@ -23,33 +23,37 @@ for f, n in [('circle.png', 'Select a circle'),
     iconfactory.add('sasgui_%s' % basename, iconset)
 iconfactory.add_default()
 
+from . import libconfig
 
-import sasimagegui
-import maskmaker
-import patheditor
-import calibrator
-import plot2dsasimage
-import fitter
-import plot1dsascurve
-import peakfind
-import fileentry
-import multipeakfitter
-import headereditor
+from . import sasimagegui
+from . import maskmaker
+from . import patheditor
+from . import calibrator
+from . import plot2dsasimage
+from . import fitter
+from . import plot1dsascurve
+from . import peakfind
+from . import fileentry
+from . import multipeakfitter
+from . import headereditor
 
-__all__ = ['sasimagegui', 'maskmaker', 'patheditor', 'calibrator', 'plot2dsasimage', 'periodic', 'fitter', 'plot1dsascurve', 'peakfind', 'multipeakfitter', 'fileentry', 'headereditor']
+__all__ = ['sasimagegui', 'maskmaker', 'patheditor', 'calibrator',
+           'plot2dsasimage', 'periodic', 'fitter', 'plot1dsascurve',
+           'peakfind', 'multipeakfitter', 'fileentry', 'headereditor',
+           'libconfig']
 
-from plot2dsasimage import *
-from calibrator import *
-from patheditor import *
-from maskmaker import *
-from sasimagegui import *
-from periodic import *
-from fitter import *
-from plot1dsascurve import *
-from peakfind import *
-from multipeakfitter import *
-from fileentry import *
-from headereditor import *
+from .plot2dsasimage import *
+from .calibrator import *
+from .patheditor import *
+from .maskmaker import *
+from .sasimagegui import *
+from .periodic import *
+from .fitter import *
+from .plot1dsascurve import *
+from .peakfind import *
+from .multipeakfitter import *
+from .fileentry import *
+from .headereditor import *
 
 for x in __all__[:]:
     __all__.extend(eval('%s.__all__' % x))

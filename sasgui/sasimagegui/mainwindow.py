@@ -12,6 +12,7 @@ from centeringtab import CenteringTab
 from integratetab import IntegrateTab
 
 from .. import maskmaker
+from .. import libconfig
 from sastool.classes import SASMask
 
 class GUIStopFittingException(Exception):
@@ -230,7 +231,7 @@ class SASImageGuiMain(Gtk.Window):
                 axes2.set_ylabel('Intensity')
             else:
                 curve.loglog(axes=axes2)
-                axes2.set_xlabel(u'q (\xc5$^{-1}$')
+                axes2.set_xlabel(u'q ('+libconfig.qunit()+')')
                 axes2.set_ylabel('Intensity')
             self.fig.canvas.draw()
         finally:
