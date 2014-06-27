@@ -8,3 +8,4 @@ def qunit():
     else:
         raise NotImplementedError('Invalid length unit: '+str(sastool.libconfig.LENGTH_UNIT))
     
+__all__=['qunit']

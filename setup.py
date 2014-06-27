@@ -2,8 +2,13 @@
 
 from setuptools import setup, find_packages
 
+with open('.version_last','rt') as f:
+    version_last=int(f.read())
+    version_last+=1
+with open('.version_last', 'wt') as f:
+    f.write('%d'%version_last)
 
-setup(name='sasgui', version='0.2.0', author='Andras Wacha',
+setup(name='sasgui', version='0.2.%d'%version_last, author='Andras Wacha',
       author_email='awacha@gmail.com', url='http://github.com/awacha/sasgui',
       description='Graphical User Interface utilities for small-angle scattering',
       packages=find_packages(),
