@@ -39,9 +39,9 @@ class PlotProperties(Gtk.Box):
                 i += 1
         if self._palette_combo.get_active_text() is None:
             self._palette_combo.set_active(0)
-        
+
         self._palette_combo.connect('changed', lambda combo:self.emit('changed'))
-        
+
         l = Gtk.Label('Color scale:')
         g.attach(l, 0, 1, 1, 1)
         self._colorscale_combo = Gtk.ComboBoxText()
@@ -51,7 +51,7 @@ class PlotProperties(Gtk.Box):
         self._colorscale_combo.set_active(0)
         g.attach(self._colorscale_combo, 1, 1, 1, 1)
         self._colorscale_combo.connect('changed', lambda combo:self.emit('changed'))
-        
+
         l = Gtk.Label('Abscissa:')
         g.attach(l, 0, 2, 1, 1)
         self._abscissa_combo = Gtk.ComboBoxText()
@@ -61,7 +61,7 @@ class PlotProperties(Gtk.Box):
         self._abscissa_combo.set_active(0)
         g.attach(self._abscissa_combo, 1, 2, 1, 1)
         self._abscissa_combo.connect('changed', lambda combo:self.emit('changed'))
-        
+
         self._lowclip_check = Gtk.CheckButton('Lower clip:')
         self._lowclip_check.set_active(False)
         g.attach(self._lowclip_check, 2, 0, 1, 1)
@@ -70,7 +70,7 @@ class PlotProperties(Gtk.Box):
         self._lowclip_entry.set_sensitive(False)
         g.attach(self._lowclip_entry, 3, 0, 1, 1)
         self._lowclip_check.connect('toggled', lambda cb, entry: entry.set_sensitive(cb.get_active()), self._lowclip_entry)
-        
+
         self._upclip_check = Gtk.CheckButton('Upper clip:')
         self._upclip_check.set_active(False)
         g.attach(self._upclip_check, 2, 1, 1, 1)
@@ -82,11 +82,11 @@ class PlotProperties(Gtk.Box):
 
         hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.pack_start(hb, False, False, 0)
-        
+
         self._palettereversed_check = Gtk.CheckButton('Reverse palette')
         hb.pack_start(self._palettereversed_check, False, False, 0)
         self._palettereversed_check.connect('toggled', lambda cb:self.emit('changed'))
-        
+
         self._plotmask_check = Gtk.CheckButton('Mask')
         self._plotmask_check.set_active(True)
         hb.pack_start(self._plotmask_check, False, False, 0)
@@ -111,35 +111,35 @@ class PlotProperties(Gtk.Box):
 
     def get_show_mask(self):
         return self._get_show_general(self._plotmask_check)
-    
+
     def get_palette(self):
         return eval('matplotlib.cm.%s' % (self._palette_combo.get_active_text() + ['', '_r'][self._palettereversed_check.get_active()]))
-    
+
     def get_abscissa(self):
         return self._abscissa_combo.get_active_text()
-    
+
     def get_show_crosshair(self):
         return self._get_show_general(self._crosshair_check)
-    
+
     def get_colorscale(self):
         return self._colorscale_combo.get_active_text()
-    
+
     def get_keep_zoom(self):
         return self._get_show_general(self._keepzoom_check)
-    
+
     def get_lowclip(self):
         if self._lowclip_entry.get_sensitive():
             return float(self._lowclip_entry.get_text())
         else:
             return None
-        
+
     def get_upclip(self):
         if self._upclip_entry.get_sensitive():
             return float(self._upclip_entry.get_text())
         else:
             return None
 
-    
+
     def _get_show_general(self, checkbutton):
         return checkbutton.get_sensitive() and checkbutton.get_active()
 
@@ -160,7 +160,7 @@ class PlotProperties(Gtk.Box):
             self._plotmask_check.set_sensitive(False)
             self._crosshair_check.set_sensitive(False)
             self._abscissa_combo.set_sensitive(False)
-            
+
 class PlotSASImage(Gtk.Box):
     __gtype_name__ = 'SASGUI_PlotSASImage2'
     __gsignals__ = {'notify':'override',
@@ -213,7 +213,7 @@ class PlotSASImage(Gtk.Box):
         self.redraw_logo()
         self.show_all()
         self.hide()
-    
+
     def do_destroy(self):
         if hasattr(self, '_statwindow'):
             logger.debug('Destroying statistics window because plotsasimage is being destroyed.')
@@ -232,12 +232,12 @@ class PlotSASImage(Gtk.Box):
             logger.debug('Calling statwindow.destroy() because of toolbutton click.')
             self._statwindow.destroy()
             del self._statwindow
-    
+
     def _on_statwindow_delete(self, statwin, event):
         logger.debug('statwindow.delete callback running. Calling destroy()')
         statwin.destroy()
         logger.debug('Returned from destroy.')
-    
+
     def _on_statwindow_destroy(self, statwin):
         logger.debug('statwindow.destroy callback running.')
         for c in self._statwindowconn:
@@ -267,7 +267,7 @@ class PlotSASImage(Gtk.Box):
         self._qraxis.clear()
         self._figure_toolbar.update()  # reset the history stack
         self._canvas.draw()
-    
+
     def redraw_image(self):
         if self._plot_properties.get_keep_zoom():
             previous_zoom = self._imgaxis.axis()
@@ -302,7 +302,11 @@ class PlotSASImage(Gtk.Box):
                              extent=extent, origin='upper')
         if self._plot_properties.get_show_colorbar():
             self._colorbaraxis.clear()
-            self._fig.colorbar(self._img, cax=self._colorbaraxis)
+            try:
+                self._fig.colorbar(self._img, cax=self._colorbaraxis)
+            except ValueError:
+                # this can be raised if a uniform image is to be plotted, i.e. image with only one colour.
+                pass
             self._colorbaraxis.set_visible(True)
         else:
             self._colorbaraxis.clear()
@@ -321,7 +325,7 @@ class PlotSASImage(Gtk.Box):
             self.zoom(previous_zoom)
         self._figure_toolbar.update()  # reset the history stack
         self._canvas.draw()
-    
+
     def redraw_mask(self):
         if self._maskimg is not None:
             self._maskimg.remove()
@@ -348,7 +352,7 @@ class PlotSASImage(Gtk.Box):
             self._qraxis.set_visible(False)
             return
         self._canvas.draw()
-    
+
     def redraw_logo(self):
         if (self.show_logo and (self._logo is not None)):
             self._logoaxis.clear()
@@ -357,7 +361,7 @@ class PlotSASImage(Gtk.Box):
             self._logoaxis.set_visible(True)
         else:
             self._logoaxis.set_visible(False)
-            
+
     def set_exposure(self, exposure):
         try:
             self._exposure = exposure
@@ -368,7 +372,7 @@ class PlotSASImage(Gtk.Box):
                 self._statwindow.update_statistics(exposure)
         finally:
             self.emit('exposure-changed', self._exposure)
-    
+
     def get_exposure(self):
         return self._exposure
 
@@ -377,15 +381,15 @@ class PlotSASImage(Gtk.Box):
 
     def get_axes(self):
         return self._imgaxis
-    
+
     def zoom(self, ax):
         self._imgaxis.axis(ax)
         self._figure_toolbar.push_current()
         self._canvas.draw()
-        
+
     def get_zoom(self):
         return self._imgaxis.axis()
-    
+
 class PlotSASImageWindow(Gtk.Window):
     __gtype_name__ = 'SASGUI_PlotSASImageWindow2'
     _instance_list = []
@@ -400,7 +404,7 @@ class PlotSASImageWindow(Gtk.Window):
         PlotSASImageWindow._instance_list.append(self)
         self._lastfocustime = time.time()
         self.connect('focus-in-event', self.on_focus)
-    
+
     def do_destroy(self, *args, **kwargs):
         if not hasattr(self, '_plot'):
             return
@@ -414,17 +418,17 @@ class PlotSASImageWindow(Gtk.Window):
             self.set_title(unicode(exposure).encode('utf-8'))
         else:
             self.set_title('2D Image')
-    
+
     def on_focus(self, *args, **kwargs):
         self._lastfocustime = time.time()
-    
+
     @classmethod
     def get_current_plot(cls):
         if not cls._instance_list:
             return cls()
         maxfocustime = max([x._lastfocustime for x in cls._instance_list])
         return [x for x in cls._instance_list if x._lastfocustime == maxfocustime][0]
-    
+
     def set_exposure(self, exposure):
         self._plot.set_exposure(exposure)
 
@@ -436,7 +440,7 @@ class PlotSASImageWindow(Gtk.Window):
 
     def zoom(self, ax):
         return self._plot.zoom(ax)
-    
+
     def get_zoom(self):
         return self._plot.get_zoom()
 
@@ -462,7 +466,7 @@ class SASImageStatisticsWindow(Gtk.Window):
         vb.pack_start(self._statview, True, True, 0)
         self.set_title('Image statistics')
         vb.show_all()
-        
+
     def update_statistics(self, exposure=None):
         if exposure is None:
             if not hasattr(self, '_lastexposure'):
