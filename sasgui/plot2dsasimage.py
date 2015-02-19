@@ -11,7 +11,7 @@ import scipy
 import time
 import logging
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 default_palette = 'jet'
 default_palette_reversed = False
@@ -25,7 +25,7 @@ class PlotProperties(Gtk.Box):
         Gtk.Box.__init__(self, orientation=Gtk.Orientation.VERTICAL)
         g = Gtk.Grid()
         self.pack_start(g, False, False, 0)
-        l = Gtk.Label('Palette:')
+        l = Gtk.Label(label='Palette:')
         g.attach(l, 0, 0, 1, 1)
         self._palette_combo = Gtk.ComboBoxText()
         self._palette_combo.set_hexpand(True)
@@ -42,7 +42,7 @@ class PlotProperties(Gtk.Box):
 
         self._palette_combo.connect('changed', lambda combo:self.emit('changed'))
 
-        l = Gtk.Label('Color scale:')
+        l = Gtk.Label(label='Color scale:')
         g.attach(l, 0, 1, 1, 1)
         self._colorscale_combo = Gtk.ComboBoxText()
         self._colorscale_combo.set_hexpand(True)
@@ -52,7 +52,7 @@ class PlotProperties(Gtk.Box):
         g.attach(self._colorscale_combo, 1, 1, 1, 1)
         self._colorscale_combo.connect('changed', lambda combo:self.emit('changed'))
 
-        l = Gtk.Label('Abscissa:')
+        l = Gtk.Label(label='Abscissa:')
         g.attach(l, 0, 2, 1, 1)
         self._abscissa_combo = Gtk.ComboBoxText()
         self._abscissa_combo.set_hexpand(True)
@@ -62,7 +62,7 @@ class PlotProperties(Gtk.Box):
         g.attach(self._abscissa_combo, 1, 2, 1, 1)
         self._abscissa_combo.connect('changed', lambda combo:self.emit('changed'))
 
-        self._lowclip_check = Gtk.CheckButton('Lower clip:')
+        self._lowclip_check = Gtk.CheckButton(label='Lower clip:')
         self._lowclip_check.set_active(False)
         g.attach(self._lowclip_check, 2, 0, 1, 1)
         self._lowclip_entry = Gtk.Entry()
@@ -71,7 +71,7 @@ class PlotProperties(Gtk.Box):
         g.attach(self._lowclip_entry, 3, 0, 1, 1)
         self._lowclip_check.connect('toggled', lambda cb, entry: entry.set_sensitive(cb.get_active()), self._lowclip_entry)
 
-        self._upclip_check = Gtk.CheckButton('Upper clip:')
+        self._upclip_check = Gtk.CheckButton(label='Upper clip:')
         self._upclip_check.set_active(False)
         g.attach(self._upclip_check, 2, 1, 1, 1)
         self._upclip_entry = Gtk.Entry()
@@ -83,26 +83,26 @@ class PlotProperties(Gtk.Box):
         hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.pack_start(hb, False, False, 0)
 
-        self._palettereversed_check = Gtk.CheckButton('Reverse palette')
+        self._palettereversed_check = Gtk.CheckButton(label='Reverse palette')
         hb.pack_start(self._palettereversed_check, False, False, 0)
         self._palettereversed_check.connect('toggled', lambda cb:self.emit('changed'))
 
-        self._plotmask_check = Gtk.CheckButton('Mask')
+        self._plotmask_check = Gtk.CheckButton(label='Mask')
         self._plotmask_check.set_active(True)
         hb.pack_start(self._plotmask_check, False, False, 0)
         self._plotmask_check.connect('toggled', lambda cb:self.emit('changed'))
 
-        self._crosshair_check = Gtk.CheckButton('Crosshair')
+        self._crosshair_check = Gtk.CheckButton(label='Crosshair')
         self._crosshair_check.set_active(True)
         hb.pack_start(self._crosshair_check, False, False, 0)
         self._crosshair_check.connect('toggled', lambda cb:self.emit('changed'))
 
-        self._colorbar_check = Gtk.CheckButton('Color bar')
+        self._colorbar_check = Gtk.CheckButton(label='Color bar')
         self._colorbar_check.set_active(True)
         hb.pack_start(self._colorbar_check, False, False, 0)
         self._colorbar_check.connect('toggled', lambda cb:self.emit('changed'))
 
-        self._keepzoom_check = Gtk.CheckButton('Freeze zoom')
+        self._keepzoom_check = Gtk.CheckButton(label='Freeze zoom')
         hb.pack_start(self._keepzoom_check, False, False, 0)
         self._keepzoom_check.connect('toggled', lambda cb:self.emit('changed'))
 
