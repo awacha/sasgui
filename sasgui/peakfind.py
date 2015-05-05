@@ -94,7 +94,7 @@ class PeakFind(Gtk.Paned):
         self.fit_baseline_entry = Gtk.Entry()
         tab.attach(self.fit_baseline_entry, 1, 2, row, row + 1)
         row += 1
-        b = Gtk.Button(stock=Gtk.STOCK_EXECUTE)
+        b = Gtk.Button(stock='Execute')
         vb1.pack_start(b, False, True, 0)
         b.connect('clicked', lambda button:self.autofind_single())
         for cb, entry in [(self.fit_amplitude_cb, self.fit_amplitude_entry),
@@ -134,7 +134,7 @@ class PeakFind(Gtk.Paned):
         self.multi_Nfit_entry = Gtk.SpinButton(adjustment=Gtk.Adjustment(5, 2, 1e6, 1, 10), digits=0)
         tab.attach(self.multi_Nfit_entry, 1, 2, row, row + 1)
         row += 1
-        b = Gtk.Button(stock=Gtk.STOCK_EXECUTE)
+        b = Gtk.Button(stock='Execute')
         vb1.pack_start(b, False, True, 0)
         b.connect('clicked', lambda button:self.autofind_multiple())
         

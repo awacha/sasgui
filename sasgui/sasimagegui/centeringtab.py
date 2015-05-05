@@ -24,7 +24,7 @@ class CenteringTab(Gtk.HBox):
         tb.insert(b, -1)
         b.connect('clicked', self.on_button_clicked, 'crosshair')
 
-        b = Gtk.ToolButton(Gtk.STOCK_EXECUTE)
+        b = Gtk.ToolButton('Execute')
         tb.insert(b, -1)
         b.connect('clicked', self.on_button_clicked, 'execute')
 

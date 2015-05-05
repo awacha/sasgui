@@ -60,7 +60,7 @@ class Fitter(Gtk.Notebook):
         bb.add(self.forwardbutton)
         self.forwardbutton.connect('clicked', self.on_button, 'Forward')
         self.forwardbutton.set_sensitive(False)
-        self.execbutton = Gtk.Button(stock=Gtk.STOCK_EXECUTE)
+        self.execbutton = Gtk.Button(stock='Execute')
         bb.add(self.execbutton)
         self.execbutton.connect('clicked', self.on_button, 'Fit')
         self.execbutton.set_sensitive(False)

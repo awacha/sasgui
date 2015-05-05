@@ -13,7 +13,7 @@ class IntegrateTab(Gtk.HBox):
         tb.set_style(Gtk.ToolbarStyle.BOTH)
         self.pack_start(tb, False, True, 0)
 
-        b = Gtk.ToolButton(Gtk.STOCK_EXECUTE)
+        b = Gtk.ToolButton('Execute')
         tb.insert(b, -1)
         b.connect('clicked', self.on_button_clicked, 'execute')
 
