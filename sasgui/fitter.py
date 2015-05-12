@@ -301,7 +301,7 @@ class Fitter(Gtk.Notebook):
         self.set_fitfunction(func)
         return True
     def set_fitfunction(self, func):
-        self.fitparamlist.update_model(itertools.imap(FitParam,
+        self.fitparamlist.update_model(map(FitParam,
                                            func.indepvars,
                                            itertools.repeat(False),
                                            itertools.repeat(0),
@@ -511,16 +511,16 @@ class FitFunction(object):
         return self.func.__call__(*args, **kwargs)
     @property
     def name(self):
-        return self.func.func_name
+        return self.func.__name__
     @property
     def helptext(self):
-        return self.func.func_doc
+        return self.func.__doc__
     @property
     def indepvars(self):
-        return self.func.func_code.co_varnames[1:self.func.func_code.co_argcount]
+        return self.func.__code__.co_varnames[1:self.func.__code__.co_argcount]
     def get_params(self):
         lis = [FitParam(x) for x in self.indepvars]
-        defs = self.func.func_defaults
+        defs = self.func.__defaults__
         if defs is not None:
             for i, d in enumerate(defs):
                 lis[len(lis) - len(defs) + i].value = d

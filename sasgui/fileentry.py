@@ -22,7 +22,7 @@ class FileEntryWithButton(Gtk.Box):
         for i, f in enumerate(fileformats):
             ff = Gtk.FileFilter()
             ff.set_name(f[0])
-            if isinstance(f[1], basestring):
+            if isinstance(f[1], str):
                 ff.add_pattern(f [1])
             else:
                 for p in f[1]:

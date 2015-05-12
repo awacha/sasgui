@@ -64,19 +64,19 @@ class CenteringTab(Gtk.HBox):
         tablecolumn += 1
         tablerow = 0
 
-        l = Gtk.Label(label=u'Nr of ' + unichr(0x03c6) + u' bins:'); l.set_alignment(0, 0.5)
+        l = Gtk.Label(label='Nr of ' + chr(0x03c6) + ' bins:'); l.set_alignment(0, 0.5)
         tab.attach(l, 2 * tablecolumn, 2 * tablecolumn + 1, tablerow, tablerow + 1, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
         self.nphi_entry = Gtk.Entry()
         tab.attach(self.nphi_entry, 2 * tablecolumn + 1, 2 * tablecolumn + 2, tablerow, tablerow + 1)
 
         tablerow += 1
-        l = Gtk.Label(label=u'Pixel extent:'); l.set_alignment(0, 0.5)
+        l = Gtk.Label(label='Pixel extent:'); l.set_alignment(0, 0.5)
         tab.attach(l, 2 * tablecolumn, 2 * tablecolumn + 1, tablerow, tablerow + 1, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
         self.extent_entry = Gtk.Entry()
         tab.attach(self.extent_entry, 2 * tablecolumn + 1, 2 * tablecolumn + 2, tablerow, tablerow + 1)
 
         tablerow += 1
-        l = Gtk.Label(label=u'Sector width (deg):'); l.set_alignment(0, 0.5)
+        l = Gtk.Label(label='Sector width (deg):'); l.set_alignment(0, 0.5)
         tab.attach(l, 2 * tablecolumn, 2 * tablecolumn + 1, tablerow, tablerow + 1, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
         self.sectorwidth_entry = Gtk.Entry()
         tab.attach(self.sectorwidth_entry, 2 * tablecolumn + 1, 2 * tablecolumn + 2, tablerow, tablerow + 1)
@@ -111,14 +111,14 @@ class CenteringTab(Gtk.HBox):
         tab.attach(b, 2, 3, 1, 2, Gtk.AttachOptions.FILL, Gtk.AttachOptions.FILL)
         b.connect('clicked', self.pollbeamposy)
     def pollbeamposx(self, *args):
-        print self.beamposx_entry.size_request()
+        print(self.beamposx_entry.size_request())
         try:
-            self.beamposx_entry.set_text(unicode(self.get_toplevel().data.header['BeamPosX']))
+            self.beamposx_entry.set_text(str(self.get_toplevel().data.header['BeamPosX']))
         except AttributeError:
             pass
     def pollbeamposy(self, *args):
         try:
-            self.beamposy_entry.set_text(unicode(self.get_toplevel().data.header['BeamPosY']))
+            self.beamposy_entry.set_text(str(self.get_toplevel().data.header['BeamPosY']))
         except AttributeError:
             pass
 
@@ -172,5 +172,5 @@ class CenteringTab(Gtk.HBox):
             self.sectorwidth_entry.set_sensitive(False)
         return True
     def set_beampos(self, coords):
-        self.beamposx_entry.set_text(unicode(coords[0]))
-        self.beamposy_entry.set_text(unicode(coords[1]))
+        self.beamposx_entry.set_text(str(coords[0]))
+        self.beamposy_entry.set_text(str(coords[1]))

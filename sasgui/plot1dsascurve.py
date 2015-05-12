@@ -8,7 +8,7 @@ import sastool
 import time
 import numpy as np
 __all__ = ['PlotSASCurve', 'PlotSASCurveWindow']
-import libconfig
+from . import libconfig
 import warnings
 
 COLORS = 'bgrcmyk'
@@ -17,9 +17,12 @@ LINESTYLES = ['-', '--', '-.', ':']
 
 itertools.product(MARKERS, COLORS, LINESTYLES)
 
+
 class PlotSASCurve(Gtk.Box):
     __gtype_name__ = 'SASGUI_PlotSASCurve'
-    _curvestyles = [{'marker':m, 'color':c, 'linestyle':ls} for ls, m, c in itertools.product(LINESTYLES, MARKERS, COLORS)  ]
+    _curvestyles = [{'marker': m, 'color': c, 'linestyle': ls}
+                    for ls, m, c in itertools.product(LINESTYLES, MARKERS, COLORS)]
+
     def __init__(self, orientation=Gtk.Orientation.HORIZONTAL):
         Gtk.Box.__init__(self, orientation=orientation)
         self._curves = []
@@ -34,7 +37,8 @@ class PlotSASCurve(Gtk.Box):
         row = 0
         col = 0
 
-        l = Gtk.Label(label='Plot type:'); l.set_alignment(0, 0.5)
+        l = Gtk.Label(label='Plot type:')
+        l.set_alignment(0, 0.5)
         grid.attach(l, 2 * col, row, 1, 1)
         self._plottype_combo = Gtk.ComboBoxText()
         grid.attach(self._plottype_combo, 2 * col + 1, row, 1, 1)
@@ -48,34 +52,41 @@ class PlotSASCurve(Gtk.Box):
         self._plottype_combo.connect('changed', self._on_plottype_changed)
         row += 1
 
-        l = Gtk.Label(label='X axis title:'); l.set_alignment(0, 0.5)
+        l = Gtk.Label(label='X axis title:')
+        l.set_alignment(0, 0.5)
         grid.attach(l, 2 * col, row, 1, 1)
         self._xtitle_entry = Gtk.ComboBoxText.new_with_entry()
-        self._xtitle_entry.append_text(u'q (' + libconfig.qunit() + ')'.encode('utf-8'))
+        self._xtitle_entry.append_text('q (' + libconfig.qunit() + ')')
         self._xtitle_entry.append_text('Pixel')
-        self._xtitle_entry.connect('editing-done', lambda cb:self.set_xlabel(cb.get_active_text().decode('utf-8')))
-        self._xtitle_entry.connect('changed', lambda cb:self.set_xlabel(cb.get_active_text().decode('utf-8')))
+        self._xtitle_entry.connect(
+            'editing-done', lambda cb: self.set_xlabel(cb.get_active_text()))
+        self._xtitle_entry.connect(
+            'changed', lambda cb: self.set_xlabel(cb.get_active_text()))
         self._xtitle_entry.set_hexpand(True)
         grid.attach(self._xtitle_entry, 2 * col + 1, row, 1, 1)
         row += 1
 
-        l = Gtk.Label(label='Y axis title:'); l.set_alignment(0, 0.5)
+        l = Gtk.Label(label='Y axis title:')
+        l.set_alignment(0, 0.5)
         grid.attach(l, 2 * col, row, 1, 1)
         self._ytitle_entry = Gtk.ComboBoxText.new_with_entry()
-        self._ytitle_entry.append_text(u'Intensity (1/cm)'.encode('utf-8'))
+        self._ytitle_entry.append_text('Intensity (1/cm)')
         self._ytitle_entry.append_text('Relative intensity (arb. units)')
         self._ytitle_entry.append_text(r'$d\sigma/d\Omega$ (1/cm)')
-        self._ytitle_entry.connect('editing-done', lambda cb:self.set_ylabel(cb.get_active_text().decode('utf-8')))
-        self._ytitle_entry.connect('changed', lambda cb:self.set_ylabel(cb.get_active_text().decode('utf-8')))
+        self._ytitle_entry.connect(
+            'editing-done', lambda cb: self.set_ylabel(cb.get_active_text()))
+        self._ytitle_entry.connect(
+            'changed', lambda cb: self.set_ylabel(cb.get_active_text()))
         self._ytitle_entry.set_hexpand(True)
         grid.attach(self._ytitle_entry, 2 * col + 1, row, 1, 1)
         row += 1
 
-
-        l = Gtk.Label(label='Title:'); l.set_alignment(0, 0.5)
+        l = Gtk.Label(label='Title:')
+        l.set_alignment(0, 0.5)
         grid.attach(l, 2 * col, row, 1, 1)
         self._title_entry = Gtk.Entry()
-        self._title_entry.connect('changed', lambda cb:self.set_title(cb.get_active_text().decode('utf-8')))
+        self._title_entry.connect(
+            'changed', lambda cb: self.set_title(cb.get_active_text()))
         grid.attach(self._title_entry, 2 * col + 1, row, 1, 1)
         row = 0
         col += 1
@@ -100,15 +111,16 @@ class PlotSASCurve(Gtk.Box):
         self._majorgrid_cb = Gtk.CheckButton(label='Major grid')
         grid.attach(self._majorgrid_cb, 2 * col, row, 2, 1)
         self._majorgrid_cb.set_active(True)
-        self._majorgrid_cb.connect('toggled', lambda cb:(self.gca().grid(cb.get_active(), 'major'), self.draw()))
+        self._majorgrid_cb.connect(
+            'toggled', lambda cb: (self.gca().grid(cb.get_active(), 'major'), self.draw()))
         row += 1
 
         self._minorgrid_cb = Gtk.CheckButton(label='Minor grid')
         grid.attach(self._minorgrid_cb, 2 * col, row, 2, 1)
         self._minorgrid_cb.set_active(True)
-        self._minorgrid_cb.connect('toggled', lambda cb:(self.gca().grid(cb.get_active(), 'minor'), self.draw()))
+        self._minorgrid_cb.connect(
+            'toggled', lambda cb: (self.gca().grid(cb.get_active(), 'minor'), self.draw()))
         row += 1
-
 
         self.fig = Figure(figsize=(0.2, 0.2), dpi=72)
         self.canvas = FigureCanvasGTK3Agg(self.fig)
@@ -118,11 +130,11 @@ class PlotSASCurve(Gtk.Box):
 
         tbutton = Gtk.ToolButton(label='Clear')
         tbutton.set_icon_name('edit-clear')
-        tbutton.connect('clicked', lambda tbutton:self.cla())
+        tbutton.connect('clicked', lambda tbutton: self.cla())
         tb.insert(tbutton, 0)
         tbutton = Gtk.ToolButton(label='Refresh')
         tbutton.set_icon_name('view-refresh')
-        tbutton.connect('clicked', lambda tbutton:self._replot_curves())
+        tbutton.connect('clicked', lambda tbutton: self._replot_curves())
         tb.insert(tbutton, 0)
 
     def _on_plottype_changed(self, combo):
@@ -165,6 +177,7 @@ class PlotSASCurve(Gtk.Box):
 
     def gca(self):
         return self.fig.gca()
+
     def add_curve(self, *args, **kwargs):
         if not self._hold_cb.get_active():
             self.cla()
@@ -177,20 +190,25 @@ class PlotSASCurve(Gtk.Box):
             self._curves.append(args[0])
         else:
             ret = self.gca().plot(*args, **kwargs)
-            self._curves.extend([sastool.classes.GeneralCurve(x.get_xdata(), x.get_ydata()) for x in ret if isinstance(x, Line2D)])
+            self._curves.extend([sastool.classes.GeneralCurve(
+                x.get_xdata(), x.get_ydata()) for x in ret if isinstance(x, Line2D)])
         if self._legend_cb.get_active():
             self.legend()
         self._on_plottype_changed(self._plottype_combo)
         return ret
+
     def plot(self, *args, **kwargs):
         self._plottype_combo.set_active(0)
         self.add_curve(*args, **kwargs)
+
     def loglog(self, *args, **kwargs):
         self._plottype_combo.set_active(3)
         self.add_curve(*args, **kwargs)
+
     def guinier(self, *args, **kwargs):
         self._plottype_combo.set_active(4)
         self.add_curve(*args, **kwargs)
+
     def add_curve_with_errorbar(self, *args, **kwargs):
         if not self._hold_cb.get_active():
             self.cla()
@@ -215,47 +233,61 @@ class PlotSASCurve(Gtk.Box):
             else:
                 xerr = np.zeros_like(x)
                 yerr = np.zeros_like(y)
-            self._curves.append(sastool.classes.GeneralCurve(x, y, dx=xerr, dy=yerr))
+            self._curves.append(
+                sastool.classes.GeneralCurve(x, y, dx=xerr, dy=yerr))
         if self._legend_cb.get_active():
             self.legend()
         self._on_plottype_changed(self._plottype_combo)
         return ret
+
     def errorbar(self, *args, **kwargs):
         self.add_curve_with_errorbar(*args, **kwargs)
+
     def semilogy(self, *args, **kwargs):
         self._plottype_combo.set_active(2)
         self.add_curve(*args, **kwargs)
+
     def semilogx(self, *args, **kwargs):
         self._plottype_combo.set_active(1)
         self.add_curve(*args, **kwargs)
+
     def draw(self):
         return self.canvas.draw()
+
     def cla(self, *args, **kwargs):
         self._curves = []
         self.gca().clear(*args, **kwargs)
         self.gca().grid(self._majorgrid_cb.get_active(), 'major')
         self.gca().grid(self._minorgrid_cb.get_active(), 'minor')
         self.draw()
+
     def legend(self, *args, **kwargs):
         self.gca().legend(*args, **kwargs)
         self.draw()
+
     def text(self, *args, **kwargs):
         self.gca().text(*args, **kwargs)
         self.draw()
+
     def figtext(self, *args, **kwargs):
         self.figure.text(*args, **kwargs)
         self.draw()
+
     def set_title(self, *args, **kwargs):
         self.gca().title(*args, **kwargs)
         self.draw()
+
     def set_xlabel(self, *args, **kwargs):
         self.gca().set_xlabel(*args, **kwargs)
         self.draw()
+
     def set_ylabel(self, *args, **kwargs):
         self.gca().set_ylabel(*args, **kwargs)
         self.draw()
+
     def axis(self, *args, **kwargs):
         return self.gca().axis(*args, **kwargs)
+
     def _replot_curves(self):
         curves = self._curves[:]
         self.cla()
@@ -275,10 +307,12 @@ class PlotSASCurve(Gtk.Box):
         self.gca().grid(self._majorgrid_cb.get_active(), 'major')
         self.gca().grid(self._minorgrid_cb.get_active(), 'minor')
 
+
 class PlotSASCurveWindow(Gtk.Window):
     __gtype_name__ = 'SASGUI_PlotSASCurveWindow'
-    __gsignals__ = {'delete-event':'override'}
+    __gsignals__ = {'delete-event': 'override'}
     _instance_list = []
+
     def __init__(self, title='Curve'):
         Gtk.Window.__init__(self)
         self.set_title(title)
@@ -292,48 +326,67 @@ class PlotSASCurveWindow(Gtk.Window):
         self.connect('delete-event', self.on_delete)
         self.connect('focus-in-event', self.on_focus)
         vb.show_all()
+
     def on_delete(self, *args, **kwargs):
         self.plotsascurve.destroy()
         self.destroy()
         PlotSASCurveWindow._instance_list.remove(self)
         return True
+
     def on_focus(self, *args, **kwargs):
         self._lastfocustime = time.time()
+
     @classmethod
     def get_current_plot(cls):
         if not cls._instance_list:
             return cls()
         maxfocustime = max([x._lastfocustime for x in cls._instance_list])
         return [x for x in cls._instance_list if x._lastfocustime == maxfocustime][0]
+
     def gca(self):
         return self.plotsascurvesascurve.gca()
+
     def add_curve(self, *args, **kwargs):
         return self.plotsascurve.add_curve(*args, **kwargs)
+
     def add_curve_with_errorbar(self, *args, **kwargs):
         return self.plotsascurve.add_curve_with_errorbar(*args, **kwargs)
+
     def plot(self, *args, **kwargs):
         return self.plotsascurve.plot(*args, **kwargs)
+
     def loglog(self, *args, **kwargs):
         return self.plotsascurve.loglog(*args, **kwargs)
+
     def errorbar(self, *args, **kwargs):
         return self.plotsascurve.errorbar(*args, **kwargs)
+
     def semilogy(self, *args, **kwargs):
         return self.plotsascurve.semilogy(*args, **kwargs)
+
     def semilogx(self, *args, **kwargs):
         return self.plotsascurve.semilogx(*args, **kwargs)
+
     def cla(self, *args, **kwargs):
         return self.plotsascurve.clear(*args, **kwargs)
+
     def legend(self, *args, **kwargs):
         return self.plotsascurve.legend(*args, **kwargs)
+
     def text(self, *args, **kwargs):
         return self.plotsascurve.text(*args, **kwargs)
+
     def figtext(self, *args, **kwargs):
         return self.figure.text(*args, **kwargs)
+
     def title(self, *args, **kwargs):
         return self.plotsascurve.set_title(*args, **kwargs)
+
     def set_xlabel(self, *args, **kwargs):
         return self.plotsascurve.set_xlabel(*args, **kwargs)
+
     def set_ylabel(self, *args, **kwargs):
         return self.plotsascurve.set_ylabel(*args, **kwargs)
+
     def axis(self, *args, **kwargs):
         return self.plotsascurve.axis(*args, **kwargs)

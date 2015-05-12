@@ -35,7 +35,7 @@ class Periodic(Gtk.Table):
             self.my_parent.select(self, element, atnumber)
     def __init__(self):
         Gtk.Table.__init__(self, 7, 18)
-        self.elements = dict(zip(re.findall('([A-Z][a-z]*)', self.table_list), range(1, 200)))
+        self.elements = dict(list(zip(re.findall('([A-Z][a-z]*)', self.table_list), list(range(1, 200)))))
         iline = 0
         for line in self.table_list.split('\n'):
             icolumn = 0
@@ -88,7 +88,7 @@ class PeriodicButton(Gtk.Button):
     def set_element(self, element):
         if element in self.periodic.elements:
             self.set_label(element)
-        elif element in self.periodic.elements.values():
+        elif element in list(self.periodic.elements.values()):
             self.set_label([k for k in self.periodic.elements if self.periodic.elements[k] == element][0])
     def get_element_name(self):
         return self.get_label()
@@ -649,7 +649,7 @@ def get_atomic_level_width(z, edge):
 
 if __name__ == '__main__':
     def dummy_handler(widget):
-        print widget.get_element_name(), widget.get_element_number()
+        print(widget.get_element_name(), widget.get_element_number())
 
     wmain = Gtk.Window(Gtk.WindowType.TOPLEVEL)
     p = PeriodicButton()

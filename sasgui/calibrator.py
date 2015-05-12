@@ -456,7 +456,7 @@ class QCalibrator(Calibrator):
             f.write('#%s: %g; %d\n' % (prop, self.get_property(prop), self.checkbuttons[prop].get_active()))
     def read_from_header(self, line):
         line = line.strip()
-        print line
+        print(line)
         for name in sorted(self.checkbuttons):
             if line.startswith('#' + name + ': '):
                 t = line.split(':', 1)[1]

@@ -5,11 +5,11 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg
 from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3
 
-from filetab import FileTab
-from plottab import PlotTab
-from masktab import MaskTab
-from centeringtab import CenteringTab
-from integratetab import IntegrateTab
+from .filetab import FileTab
+from .plottab import PlotTab
+from .masktab import MaskTab
+from .centeringtab import CenteringTab
+from .integratetab import IntegrateTab
 
 from .. import maskmaker
 from .. import libconfig
@@ -146,7 +146,7 @@ class SASImageGuiMain(Gtk.Window):
         return True
     def on_error(self, widget, error):  # IGNORE:W0613
         self.statusbar.remove_all(self.statusbar.get_context_id('sastool'))
-        self.statusbar.push(self.statusbar.get_context_id('sastool'), 'Error: ' + unicode(error))
+        self.statusbar.push(self.statusbar.get_context_id('sastool'), 'Error: ' + str(error))
         return True
     def on_plot(self, widget, argument):  # IGNORE:W0613
         if argument == 'clear-graph':
@@ -231,7 +231,7 @@ class SASImageGuiMain(Gtk.Window):
                 axes2.set_ylabel('Intensity')
             else:
                 curve.loglog(axes=axes2)
-                axes2.set_xlabel(u'q ('+libconfig.qunit()+')')
+                axes2.set_xlabel('q ('+libconfig.qunit()+')')
                 axes2.set_ylabel('Intensity')
             self.fig.canvas.draw()
         finally:

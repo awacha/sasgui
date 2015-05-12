@@ -135,9 +135,9 @@ class PlotTab(Gtk.HBox):
         if len(data.check_for_q(False)) > 0:
             self.plotqrange_checkbutton.set_active(False)
         if not self.upperclip_checkbutton.get_active():
-            self.upperclip_entry.set_text(unicode(float(data.max(plotmask))))
+            self.upperclip_entry.set_text(str(float(data.max(plotmask))))
         if not self.lowclip_checkbutton.get_active():
-            self.lowclip_entry.set_text(unicode(float(data.min(plotmask))))
+            self.lowclip_entry.set_text(str(float(data.min(plotmask))))
         return True
     def plot2d(self, data, axes):
         if data is None:

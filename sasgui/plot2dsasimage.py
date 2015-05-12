@@ -18,9 +18,11 @@ default_palette_reversed = False
 
 __all__ = ['PlotSASImage', 'PlotSASImageWindow']
 
+
 class PlotProperties(Gtk.Box):
-    __gsignals__ = {'changed':(GObject.SignalFlags.RUN_FIRST, None, ()),
-                  }
+    __gsignals__ = {'changed': (GObject.SignalFlags.RUN_FIRST, None, ()),
+                    }
+
     def __init__(self):
         Gtk.Box.__init__(self, orientation=Gtk.Orientation.VERTICAL)
         g = Gtk.Grid()
@@ -40,7 +42,8 @@ class PlotProperties(Gtk.Box):
         if self._palette_combo.get_active_text() is None:
             self._palette_combo.set_active(0)
 
-        self._palette_combo.connect('changed', lambda combo:self.emit('changed'))
+        self._palette_combo.connect(
+            'changed', lambda combo: self.emit('changed'))
 
         l = Gtk.Label(label='Color scale:')
         g.attach(l, 0, 1, 1, 1)
@@ -50,7 +53,8 @@ class PlotProperties(Gtk.Box):
         self._colorscale_combo.append_text('log10')
         self._colorscale_combo.set_active(0)
         g.attach(self._colorscale_combo, 1, 1, 1, 1)
-        self._colorscale_combo.connect('changed', lambda combo:self.emit('changed'))
+        self._colorscale_combo.connect(
+            'changed', lambda combo: self.emit('changed'))
 
         l = Gtk.Label(label='Abscissa:')
         g.attach(l, 0, 2, 1, 1)
@@ -60,7 +64,8 @@ class PlotProperties(Gtk.Box):
         self._abscissa_combo.append_text('q')
         self._abscissa_combo.set_active(0)
         g.attach(self._abscissa_combo, 1, 2, 1, 1)
-        self._abscissa_combo.connect('changed', lambda combo:self.emit('changed'))
+        self._abscissa_combo.connect(
+            'changed', lambda combo: self.emit('changed'))
 
         self._lowclip_check = Gtk.CheckButton(label='Lower clip:')
         self._lowclip_check.set_active(False)
@@ -69,7 +74,8 @@ class PlotProperties(Gtk.Box):
         self._lowclip_entry.set_hexpand(True)
         self._lowclip_entry.set_sensitive(False)
         g.attach(self._lowclip_entry, 3, 0, 1, 1)
-        self._lowclip_check.connect('toggled', lambda cb, entry: entry.set_sensitive(cb.get_active()), self._lowclip_entry)
+        self._lowclip_check.connect('toggled', lambda cb, entry: entry.set_sensitive(
+            cb.get_active()), self._lowclip_entry)
 
         self._upclip_check = Gtk.CheckButton(label='Upper clip:')
         self._upclip_check.set_active(False)
@@ -78,33 +84,39 @@ class PlotProperties(Gtk.Box):
         self._upclip_entry.set_hexpand(True)
         self._upclip_entry.set_sensitive(False)
         g.attach(self._upclip_entry, 3, 1, 1, 1)
-        self._upclip_check.connect('toggled', lambda cb, entry: entry.set_sensitive(cb.get_active()), self._upclip_entry)
+        self._upclip_check.connect('toggled', lambda cb, entry: entry.set_sensitive(
+            cb.get_active()), self._upclip_entry)
 
         hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.pack_start(hb, False, False, 0)
 
         self._palettereversed_check = Gtk.CheckButton(label='Reverse palette')
         hb.pack_start(self._palettereversed_check, False, False, 0)
-        self._palettereversed_check.connect('toggled', lambda cb:self.emit('changed'))
+        self._palettereversed_check.connect(
+            'toggled', lambda cb: self.emit('changed'))
 
         self._plotmask_check = Gtk.CheckButton(label='Mask')
         self._plotmask_check.set_active(True)
         hb.pack_start(self._plotmask_check, False, False, 0)
-        self._plotmask_check.connect('toggled', lambda cb:self.emit('changed'))
+        self._plotmask_check.connect(
+            'toggled', lambda cb: self.emit('changed'))
 
         self._crosshair_check = Gtk.CheckButton(label='Crosshair')
         self._crosshair_check.set_active(True)
         hb.pack_start(self._crosshair_check, False, False, 0)
-        self._crosshair_check.connect('toggled', lambda cb:self.emit('changed'))
+        self._crosshair_check.connect(
+            'toggled', lambda cb: self.emit('changed'))
 
         self._colorbar_check = Gtk.CheckButton(label='Color bar')
         self._colorbar_check.set_active(True)
         hb.pack_start(self._colorbar_check, False, False, 0)
-        self._colorbar_check.connect('toggled', lambda cb:self.emit('changed'))
+        self._colorbar_check.connect(
+            'toggled', lambda cb: self.emit('changed'))
 
         self._keepzoom_check = Gtk.CheckButton(label='Freeze zoom')
         hb.pack_start(self._keepzoom_check, False, False, 0)
-        self._keepzoom_check.connect('toggled', lambda cb:self.emit('changed'))
+        self._keepzoom_check.connect(
+            'toggled', lambda cb: self.emit('changed'))
 
     def get_show_colorbar(self):
         return self._get_show_general(self._colorbar_check)
@@ -139,7 +151,6 @@ class PlotProperties(Gtk.Box):
         else:
             return None
 
-
     def _get_show_general(self, checkbutton):
         return checkbutton.get_sensitive() and checkbutton.get_active()
 
@@ -148,7 +159,8 @@ class PlotProperties(Gtk.Box):
             self._lowclip_entry.set_text(str(exposure.Intensity.min()))
             self._upclip_entry.set_text(str(exposure.Intensity.max()))
             self._plotmask_check.set_sensitive(exposure.mask is not None)
-            self._crosshair_check.set_sensitive(all([x in exposure.header for x in ['BeamPosX', 'BeamPosY']]))
+            self._crosshair_check.set_sensitive(
+                all([x in exposure.header for x in ['BeamPosX', 'BeamPosY']]))
             if exposure.check_for_q(False):
                 self._abscissa_combo.set_active(0)
                 self._abscissa_combo.set_sensitive(False)
@@ -161,22 +173,26 @@ class PlotProperties(Gtk.Box):
             self._crosshair_check.set_sensitive(False)
             self._abscissa_combo.set_sensitive(False)
 
+
 class PlotSASImage(Gtk.Box):
     __gtype_name__ = 'SASGUI_PlotSASImage2'
-    __gsignals__ = {'notify':'override',
-                    'exposure-changed':(GObject.SignalFlags.RUN_FIRST, None, (object,)),
-                    'destroy':'override'}
+    __gsignals__ = {'notify': 'override',
+                    'exposure-changed': (GObject.SignalFlags.RUN_FIRST, None, (object,)),
+                    'destroy': 'override'}
     show_logo = GObject.Property(type=bool, default=True)
     logo = GObject.Property(type=str, default='')
     show_qr = GObject.Property(type=bool, default=True)
-    mask_alpha = GObject.Property(type=float, default=0.6, minimum=0, maximum=1)
+    mask_alpha = GObject.Property(
+        type=float, default=0.6, minimum=0, maximum=1)
+
     def __init__(self):
         Gtk.Box.__init__(self, orientation=Gtk.Orientation.VERTICAL)
         expander = Gtk.Expander(label='Plot properties')
         self.pack_start(expander, False, False, 0)
         self._plot_properties = PlotProperties()
         expander.add(self._plot_properties)
-        self._plot_properties.connect('changed', self.on_plot_properties_changed)
+        self._plot_properties.connect(
+            'changed', self.on_plot_properties_changed)
 
         self._fig = Figure(figsize=(3.75, 2.5), dpi=80)
         self._canvas = FigureCanvasGTK3Agg(self._fig)
@@ -184,15 +200,15 @@ class PlotSASImage(Gtk.Box):
         self._figure_toolbar = NavigationToolbar2GTK3(self._canvas, None)
         self.pack_start(self._figure_toolbar, False, True, 0)
         tbutton = Gtk.ToolButton(Gtk.STOCK_CLEAR)
-        tbutton.connect('clicked', lambda tb:self.clear())
+        tbutton.connect('clicked', lambda tb: self.clear())
         self._figure_toolbar.insert(tbutton, 0)
         tbutton = Gtk.ToolButton(Gtk.STOCK_REFRESH)
-        tbutton.connect('clicked', lambda tb:self.redraw_image())
+        tbutton.connect('clicked', lambda tb: self.redraw_image())
         self._figure_toolbar.insert(tbutton, 0)
         self._stattbutton = Gtk.ToggleToolButton(stock_id='sasgui_piechart')
         self._stattbutton.connect('toggled', self._on_statistics_toggled)
         self._figure_toolbar.insert(self._stattbutton, 0)
-        y, x = np.mgrid[-512:512, -512:512] / 1024.*20
+        y, x = np.mgrid[-512:512, -512:512] / 1024. * 20
         testdata = np.sin(x) * np.sin(y) + (x + y) / 10
         self._exposure = testdata
         self._plot_properties.update_from_exposure(testdata)
@@ -206,7 +222,8 @@ class PlotSASImage(Gtk.Box):
         self._qraxis = self._fig.add_axes([0, 0, 0.1, 0.1], anchor='SW')
         self._qraxis.set_axis_off()
         self._qraxis.set_visible(False)
-        self._logoaxis = self._fig.add_axes([0.89, 0.01, 0.1, 0.1], anchor='SE')
+        self._logoaxis = self._fig.add_axes(
+            [0.89, 0.01, 0.1, 0.1], anchor='SE')
         self._logoaxis.set_axis_off()
         self._logoaxis.set_visible(False)
         self._logo = None
@@ -216,11 +233,13 @@ class PlotSASImage(Gtk.Box):
 
     def do_destroy(self):
         if hasattr(self, '_statwindow'):
-            logger.debug('Destroying statistics window because plotsasimage is being destroyed.')
+            logger.debug(
+                'Destroying statistics window because plotsasimage is being destroyed.')
             self._statwindow.destroy()
 
     def _on_statistics_toggled(self, tb):
-        logger.debug('Statistics toolbutton toggled. Current state: ' + str(tb.get_active()))
+        logger.debug(
+            'Statistics toolbutton toggled. Current state: ' + str(tb.get_active()))
         if tb.get_active():
             self._statwindow = SASImageStatisticsWindow()
             self._statwindow.update_statistics(self._exposure)
@@ -229,7 +248,8 @@ class PlotSASImage(Gtk.Box):
             self._statwindow.show_all()
             self._statwindow.present()
         elif hasattr(self, '_statwindow'):
-            logger.debug('Calling statwindow.destroy() because of toolbutton click.')
+            logger.debug(
+                'Calling statwindow.destroy() because of toolbutton click.')
             self._statwindow.destroy()
             del self._statwindow
 
@@ -299,13 +319,14 @@ class PlotSASImage(Gtk.Box):
             extent = self._exposure.get_q_extent()
             extent = extent[:2] + extent[-1:1:-1]
         self._img = self._imgaxis.imshow(data, norm=norm, interpolation='nearest', cmap=self._plot_properties.get_palette(),
-                             extent=extent, origin='upper')
+                                         extent=extent, origin='upper')
         if self._plot_properties.get_show_colorbar():
             self._colorbaraxis.clear()
             try:
                 self._fig.colorbar(self._img, cax=self._colorbaraxis)
             except ValueError:
-                # this can be raised if a uniform image is to be plotted, i.e. image with only one colour.
+                # this can be raised if a uniform image is to be plotted, i.e.
+                # image with only one colour.
                 pass
             self._colorbaraxis.set_visible(True)
         else:
@@ -315,8 +336,10 @@ class PlotSASImage(Gtk.Box):
         if self._plot_properties.get_show_crosshair():
             ax = self._imgaxis.axis()
             if extent is None:
-                self._imgaxis.plot(ax[:2], [self._exposure['BeamPosX']] * 2, '-w')
-                self._imgaxis.plot([self._exposure['BeamPosY']] * 2, ax[2:], '-w')
+                self._imgaxis.plot(
+                    ax[:2], [self._exposure['BeamPosX']] * 2, '-w')
+                self._imgaxis.plot(
+                    [self._exposure['BeamPosY']] * 2, ax[2:], '-w')
             else:
                 self._imgaxis.plot(ax[:2], [0, 0], '-w')
                 self._imgaxis.plot([0, 0], ax[2:], '-w')
@@ -335,8 +358,10 @@ class PlotSASImage(Gtk.Box):
             # this is a numpy hack to save space. Instead of repeating the mask
             # 4 times along the 3th axis, we set the corresponding stride value
             # to zero.
-            maskimage = np.lib.stride_tricks.as_strided(maskmatrix, strides=maskmatrix.strides + (0,), shape=maskmatrix.shape + (4,))
-            self._maskimg = self._imgaxis.imshow(maskimage, alpha=self.mask_alpha, origin='upper', interpolation='nearest', extent=self._img.get_extent())
+            maskimage = np.lib.stride_tricks.as_strided(
+                maskmatrix, strides=maskmatrix.strides + (0,), shape=maskmatrix.shape + (4,))
+            self._maskimg = self._imgaxis.imshow(
+                maskimage, alpha=self.mask_alpha, origin='upper', interpolation='nearest', extent=self._img.get_extent())
 
     def redraw_qr(self):
         self._qraxis.clear()
@@ -345,7 +370,8 @@ class PlotSASImage(Gtk.Box):
                 raise KeyError
             self._qraxis.set_axis_off()
             self._qraxis.set_visible(True)
-            qr = qrcode.make(self._exposure['Owner'] + '@CREDO://' + str(self._exposure.header) + ' ' + str(self._exposure['Date']), box_size=10)
+            qr = qrcode.make(self._exposure['Owner'] + '@CREDO://' + str(
+                self._exposure.header) + ' ' + str(self._exposure['Date']), box_size=10)
             self._qraxis.spy(np.array(qr._img.im).reshape(qr._img.size) == 0)
         except KeyError:
             self._qraxis.clear()
@@ -390,9 +416,11 @@ class PlotSASImage(Gtk.Box):
     def get_zoom(self):
         return self._imgaxis.axis()
 
+
 class PlotSASImageWindow(Gtk.Window):
     __gtype_name__ = 'SASGUI_PlotSASImageWindow2'
     _instance_list = []
+
     def __init__(self):
         Gtk.Window.__init__(self)
         vb = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -415,7 +443,7 @@ class PlotSASImageWindow(Gtk.Window):
 
     def on_exposure_changed(self, plotbox, exposure):
         if isinstance(exposure, sastool.classes.SASExposure):
-            self.set_title(unicode(exposure).encode('utf-8'))
+            self.set_title(str(exposure))
         else:
             self.set_title('2D Image')
 
@@ -444,18 +472,23 @@ class PlotSASImageWindow(Gtk.Window):
     def get_zoom(self):
         return self._plot.get_zoom()
 
+
 class SASImageStatisticsWindow(Gtk.Window):
-    _stats = [('npix', 'Number of pixels'), ('mean', 'Mean'), ('std', 'Std.Dev.'), ('median', 'Median'), ('min', 'Minimum'), ('max', 'Maximum'), ('sum', 'Sum')]
+    _stats = [('npix', 'Number of pixels'), ('mean', 'Mean'), ('std', 'Std.Dev.'),
+              ('median', 'Median'), ('min', 'Minimum'), ('max', 'Maximum'), ('sum', 'Sum')]
+
     def __init__(self):
         Gtk.Window.__init__(self, Gtk.WindowType.TOPLEVEL)
         vb = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.add(vb)
         self._maskedcb = Gtk.CheckButton(label='Do not count masked pixels')
-        self._maskedcb.connect('toggled', lambda cb:self.update_statistics(None))
+        self._maskedcb.connect(
+            'toggled', lambda cb: self.update_statistics(None))
         vb.pack_start(self._maskedcb, False, False, 0)
 #         self._zoomedcb = Gtk.CheckButton(label='Only in current zoom')
 #         vb.pack_start(self._zoomedcb, False,False,0)
-        self._statlist = Gtk.ListStore(GObject.TYPE_STRING, GObject.TYPE_STRING, GObject.TYPE_STRING)
+        self._statlist = Gtk.ListStore(
+            GObject.TYPE_STRING, GObject.TYPE_STRING, GObject.TYPE_STRING)
         for sname, slabel in self._stats:
             self._statlist.append([sname, slabel, ''])
         self._statview = Gtk.TreeView(self._statlist)
@@ -475,22 +508,28 @@ class SASImageStatisticsWindow(Gtk.Window):
         if isinstance(exposure, sastool.classes.SASExposure):
             for row in self._statlist:
                 if row[0] == 'mean':
-                    row[2] = str(float(exposure.mean(masked=self._maskedcb.get_active())))
+                    row[2] = str(
+                        float(exposure.mean(masked=self._maskedcb.get_active())))
                 elif row[0] == 'std':
-                    row[2] = str(float(exposure.std(masked=self._maskedcb.get_active())))
+                    row[2] = str(
+                        float(exposure.std(masked=self._maskedcb.get_active())))
                 elif row[0] == 'npix':
                     if self._maskedcb.get_active():
                         row[2] = str(exposure.mask.mask.sum())
                     else:
                         row[2] = str(exposure.size)
                 elif row[0] == 'min':
-                    row[2] = str(float(exposure.min(masked=self._maskedcb.get_active())))
+                    row[2] = str(
+                        float(exposure.min(masked=self._maskedcb.get_active())))
                 elif row[0] == 'max':
-                    row[2] = str(float(exposure.max(masked=self._maskedcb.get_active())))
+                    row[2] = str(
+                        float(exposure.max(masked=self._maskedcb.get_active())))
                 elif row[0] == 'median':
-                    row[2] = str(float(exposure.median(masked=self._maskedcb.get_active())))
+                    row[2] = str(
+                        float(exposure.median(masked=self._maskedcb.get_active())))
                 elif row[0] == 'sum':
-                    row[2] = str(float(exposure.sum(masked=self._maskedcb.get_active())))
+                    row[2] = str(
+                        float(exposure.sum(masked=self._maskedcb.get_active())))
         else:
             for row in self._statlist:
                 if row[0] == 'mean':

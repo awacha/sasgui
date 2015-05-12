@@ -102,8 +102,8 @@ class IntegrateTab(Gtk.HBox):
         else:
             minradius = self.get_toplevel().data.qtopixel_radius(minradius)
             maxradius = self.get_toplevel().data.qtopixel_radius(maxradius)
-        self.extraentries[0].set_text(unicode(minradius))
-        self.extraentries[1].set_text(unicode(maxradius))
+        self.extraentries[0].set_text(str(minradius))
+        self.extraentries[1].set_text(str(maxradius))
         return True
     def on_intmethod_changed(self, combo):
         if combo.get_active_text() == 'Full radial':
@@ -115,7 +115,7 @@ class IntegrateTab(Gtk.HBox):
             self.extracb.set_label('')
             self.extracb.set_sensitive(False)
         elif combo.get_active_text() == 'Sector':
-            for i, name in zip(range(2), ['Phi0 (deg):', 'dPhi (deg):']):
+            for i, name in zip(list(range(2)), ['Phi0 (deg):', 'dPhi (deg):']):
                 self.extralabels[i].set_label(name)
                 self.extralabels[i].set_sensitive(True)
                 self.extraentries[i].set_text('')
@@ -123,7 +123,7 @@ class IntegrateTab(Gtk.HBox):
             self.extracb.set_label('Centrosymmetric?')
             self.extracb.set_sensitive(True)
         elif combo.get_active_text() == 'Slice':
-            for i, name in zip(range(2), ['Phi0 (deg):', 'width (pixel):']):
+            for i, name in zip(list(range(2)), ['Phi0 (deg):', 'width (pixel):']):
                 self.extralabels[i].set_label(name)
                 self.extralabels[i].set_sensitive(True)
                 self.extraentries[i].set_text('')
@@ -131,7 +131,7 @@ class IntegrateTab(Gtk.HBox):
             self.extracb.set_label('')
             self.extracb.set_sensitive(False)
         elif combo.get_active_text() == 'Azimuthal':
-            for i, name in zip(range(2), ['Min. radius:', 'Max. radius:']):
+            for i, name in zip(list(range(2)), ['Min. radius:', 'Max. radius:']):
                 self.extralabels[i].set_label(name)
                 self.extralabels[i].set_sensitive(True)
                 self.extraentries[i].set_text('')
@@ -208,8 +208,8 @@ class IntegrateTab(Gtk.HBox):
                 qrange = data.get_qrange()
             else:
                 qrange = data.get_pixrange()
-            self.extraentries[0].set_text(unicode(qrange.min()))
-            self.extraentries[1].set_text(unicode(qrange.max()))
+            self.extraentries[0].set_text(str(qrange.min()))
+            self.extraentries[1].set_text(str(qrange.max()))
             if not self.Nbins_checkbutton.get_active():
                 self.Nbins_entry.set_text('100')
         else:
@@ -219,10 +219,10 @@ class IntegrateTab(Gtk.HBox):
             else:
                 absrange = data.get_pixrange()
             if not self.minabscissa_checkbutton.get_active():
-                self.minabscissa_entry.set_text(unicode(absrange.min()))
+                self.minabscissa_entry.set_text(str(absrange.min()))
             if not self.maxabscissa_checkbutton.get_active():
-                self.maxabscissa_entry.set_text(unicode(absrange.max()))
+                self.maxabscissa_entry.set_text(str(absrange.max()))
             if not self.Nbins_checkbutton.get_active():
-                self.Nbins_entry.set_text(unicode(len(absrange)))
+                self.Nbins_entry.set_text(str(len(absrange)))
 
 
